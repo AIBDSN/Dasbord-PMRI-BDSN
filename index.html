@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GRDF — Tableau de bord maintenance</title>
+  <link rel="icon" type="image/png" href="logo.png"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-block">
+      <img src="logo-white.png" alt="Boucles de Seine Nord GRDF" class="logo-img"/>
+      <div class="logo-sep"></div>
+      <div class="header-titles">
+        <span class="header-title">Tableau de bord maintenance</span>
+        <span class="header-sub">Agence AI Boucles de Seine Nord</span>
+      </div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn-pdf" onclick="exportPDF()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      PDF
+    </button>
+    <button class="btn-pptx" onclick="exportPPTX()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      PowerPoint
+    </button>
+    <div id="file-drop-zone" onclick="document.getElementById('fileInput').click()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span id="drop-label">Charger un fichier Excel</span>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="loadFile(this)"/>
+    <div id="file-meta"></div>
+  </div>
+</header>
+
+<main id="app">
+
+  <div id="empty-state">
+    <div class="empty-icon">
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M9 8l3 3 3-3"/><line x1="12" y1="8" x2="12" y2="14"/></svg>
+    </div>
+    <h2>Aucune donnée chargée</h2>
+    <p>Glissez votre extraction SAP (.xlsx) ou cliquez sur <strong>Charger un fichier Excel</strong>.</p>
+  </div>
+
+  <div id="dashboard" style="display:none">
+
+    <!-- BARRE ONGLETS + FILTRES -->
+    <div class="mode-tabs-bar">
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="tab-prev" onclick="setMode('preventif')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          Préventif
+          <span class="mode-tab-count" id="tab-prev-count">—</span>
+        </button>
+        <button class="mode-tab" id="tab-cor" onclick="setMode('correctif')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Correctif
+          <span class="mode-tab-count mode-tab-count-cor" id="tab-cor-count">—</span>
+        </button>
+      </div>
+      <div class="mode-tabs-right">
+        <div class="filter-inline-group">
+          <label>Entité</label>
+          <select id="filter-entite" onchange="applyFilters()"><option value="">Toutes</option></select>
+        </div>
+        <div class="filter-inline-group">
+          <label>Type d'ouvrage</label>
+          <select id="filter-ouvrage" onchange="applyFilters()"><option value="">Tous</option></select>
+        </div>
+        <button class="btn-reset-sm" onclick="resetFilters()" title="Réinitialiser les filtres">↺ Réinitialiser</button>
+        <div class="extraction-badge" id="extraction-badge" style="display:none">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span id="extraction-date">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ VUE PRÉVENTIF ══ -->
+    <div id="view-preventif">
+
+      <section class="kpis">
+        <div class="kpi kpi-blue"><span class="kpi-value" id="kpi-total">—</span><span class="kpi-label">Total OT</span></div>
+        <div class="kpi kpi-green"><span class="kpi-value" id="kpi-taux">—</span><span class="kpi-label">Taux de clôture</span></div>
+        <div class="kpi kpi-orange"><span class="kpi-value" id="kpi-retard">—</span><span class="kpi-label">OT en retard</span></div>
+        <div class="kpi kpi-red"><span class="kpi-value" id="kpi-anomalie">—</span><span class="kpi-label">Terminés avec anomalie</span></div>
+        <div class="kpi kpi-gray"><span class="kpi-value" id="kpi-encours">—</span><span class="kpi-label">En cours</span></div>
+        <div class="kpi kpi-purple"><span class="kpi-value" id="kpi-attente">—</span><span class="kpi-label">Attente traitement référent</span></div>
+      </section>
+
+      <section class="chart-card gauges-section" id="section-gauges">
+        <div class="chart-header">
+          <span class="chart-title">Avancement par type d'ouvrage</span>
+          <span class="chart-legend-hint">🟢 ≥90%&nbsp;&nbsp;🟠 60–90%&nbsp;&nbsp;🔴 &lt;60%</span>
+        </div>
+        <div id="gauges-container" class="gauges-grid"></div>
+      </section>
+
+      <section class="chart-card plan-section" id="section-plan">
+        <div class="chart-header">
+          <div class="plan-header-left">
+            <span class="chart-title">Suivi du plan d'activité — Réel vs Théorique</span>
+            <span class="plan-scope">Périmètre : BRC · Robinets · PDL · PDR · SIN</span>
+          </div>
+          <div class="plan-header-right">
+            <div class="plan-zoom-group">
+              <button class="plan-zoom-btn" onclick="setPlanZoom(10)">S±10</button>
+              <button class="plan-zoom-btn" onclick="setPlanZoom(20)">S±20</button>
+              <button class="plan-zoom-btn active" onclick="setPlanZoom(0)">Année</button>
+            </div>
+            <div id="plan-alert" class="plan-alert plan-alert-ok">—</div>
+          </div>
+        </div>
+        <div class="plan-kpis">
+          <div class="plan-kpi"><span class="plan-kpi-value" id="plan-kpi-theorique">—</span><span class="plan-kpi-label" id="plan-kpi-label-theo">Plan cumulé · objectif annuel : — OT</span></div>
+          <div class="plan-kpi"><span class="plan-kpi-value plan-kpi-green" id="plan-kpi-realise">—</span><span class="plan-kpi-label">OT réalisés (périmètre plan)</span></div>
+          <div class="plan-kpi"><span class="plan-kpi-value" id="plan-kpi-pct">—</span><span class="plan-kpi-label">% Réalisation du plan</span></div>
+          <div class="plan-kpi"><span class="plan-kpi-value" id="plan-kpi-ecart">—</span><span class="plan-kpi-label">Écart (réel − plan)</span></div>
+        </div>
+        <div class="plan-chart-wrap"><canvas id="chartPlanActivite"></canvas></div>
+      </section>
+
+      <section class="charts-row-2" id="section-charts">
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">Répartition des statuts</span></div>
+          <div class="chart-body chart-body-donut"><canvas id="chartStatut"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">Fait vs Reste à faire — par type d'ouvrage</span></div>
+          <div class="chart-body chart-body-bar"><canvas id="chartOuvrageBar"></canvas></div>
+        </div>
+      </section>
+
+      <section class="table-section">
+        <div class="table-header">
+          <span class="table-title" id="table-section-title">OT en retard</span>
+          <div class="table-actions">
+            <div class="tab-group">
+              <button class="tab-btn active" data-mode="retard"   onclick="setTableMode('retard')">🔴 En retard</button>
+              <button class="tab-btn"        data-mode="afaire"   onclick="setTableMode('afaire')">🔵 Reste à faire</button>
+              <button class="tab-btn"        data-mode="attente"  onclick="setTableMode('attente')">⏳ Attente référent</button>
+              <button class="tab-btn"        data-mode="incohere" onclick="setTableMode('incohere')">⚠️ Incohérences</button>
+              <button class="tab-btn"        data-mode="termine"  onclick="setTableMode('termine')">✅ Terminés</button>
+              <button class="tab-btn"        data-mode="all"      onclick="setTableMode('all')">📋 Tous</button>
+            </div>
+            <button class="btn-excel" onclick="exportExcel()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+              Exporter Excel
+            </button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table id="table-retard">
+            <thead><tr>
+              <th>N° SAP</th><th>Libellé ordre</th><th>Type d'ouvrage</th><th>Type de travail</th>
+              <th>Statut terrain</th><th>Statut ordre</th><th>Entité</th><th>Ville</th><th>Date référence</th>
+            </tr></thead>
+            <tbody id="table-retard-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div><!-- /view-preventif -->
+
+    <!-- ══ VUE CORRECTIF ══ -->
+    <div id="view-correctif" style="display:none">
+
+      <!-- KPIs -->
+      <section class="kpis kpis-cor">
+        <div class="kpi kpi-blue"><span class="kpi-value" id="cor-kpi-total">—</span><span class="kpi-label">Total OT correctifs</span></div>
+        <div class="kpi kpi-red"><span class="kpi-value" id="cor-kpi-ouverts">—</span><span class="kpi-label">OT ouverts</span></div>
+        <div class="kpi kpi-green"><span class="kpi-value" id="cor-kpi-clotures">—</span><span class="kpi-label">OT clôturés</span></div>
+        <div class="kpi kpi-orange"><span class="kpi-value" id="cor-kpi-taux">—</span><span class="kpi-label">Taux de clôture</span></div>
+        <div class="kpi kpi-red"><span class="kpi-value" id="cor-kpi-depasses">—</span><span class="kpi-label">Dépassés &gt; 1 mois</span></div>
+        <div class="kpi kpi-purple"><span class="kpi-value" id="cor-kpi-anomalies">—</span><span class="kpi-label">Terminés avec anomalie</span></div>
+      </section>
+
+      <!-- ANCIENNETÉ + RÉPARTITIONS -->
+      <section class="charts-row-3">
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Ancienneté des OT ouverts</span>
+            <span class="chart-legend-hint">Depuis la date de référence</span>
+          </div>
+          <div class="cor-tranches">
+            <div class="cor-tranche cor-tranche-low">
+              <div class="cor-tranche-val" id="cor-t1-val">—</div>
+              <div class="cor-tranche-pct" id="cor-t1-pct">—</div>
+              <div class="cor-tranche-label">1 à 3 mois</div>
+            </div>
+            <div class="cor-tranche cor-tranche-warn">
+              <div class="cor-tranche-val" id="cor-t2-val">—</div>
+              <div class="cor-tranche-pct" id="cor-t2-pct">—</div>
+              <div class="cor-tranche-label">6 à 12 mois</div>
+            </div>
+            <div class="cor-tranche cor-tranche-danger">
+              <div class="cor-tranche-val" id="cor-t3-val">—</div>
+              <div class="cor-tranche-pct" id="cor-t3-pct">—</div>
+              <div class="cor-tranche-label">&gt; 12 mois</div>
+            </div>
+          </div>
+          <div style="height:160px;padding:4px 16px 12px"><canvas id="chartCorAnciennete"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">Correctifs par type d'ouvrage</span></div>
+          <div style="height:280px;padding:8px 16px 12px"><canvas id="chartCorOuvrage"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">Répartition par entité</span></div>
+          <div class="chart-body chart-body-donut"><canvas id="chartCorEntite"></canvas></div>
+        </div>
+
+      </section>
+
+      <!-- COURBE ENTRÉE VS CLÔTURE -->
+      <section class="chart-card">
+        <div class="chart-header">
+          <span class="chart-title">Évolution — OT correctifs ouverts vs clôturés (cumulé 2026)</span>
+        </div>
+        <div class="plan-chart-wrap"><canvas id="chartCorCourbe"></canvas></div>
+      </section>
+
+      <!-- TABLE CORRECTIF -->
+      <section class="table-section">
+        <div class="table-header">
+          <span class="table-title" id="cor-table-title">OT correctifs ouverts</span>
+          <div class="table-actions">
+            <div class="tab-group">
+              <button class="tab-btn active" data-mode="cor-ouverts"  onclick="setCorTableMode('cor-ouverts')">🔴 Ouverts</button>
+              <button class="tab-btn"        data-mode="cor-depasses" onclick="setCorTableMode('cor-depasses')">⏰ Dépassés</button>
+              <button class="tab-btn"        data-mode="cor-clotures" onclick="setCorTableMode('cor-clotures')">✅ Clôturés</button>
+              <button class="tab-btn"        data-mode="cor-all"      onclick="setCorTableMode('cor-all')">📋 Tous</button>
+            </div>
+            <button class="btn-excel" onclick="exportExcelCor()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+              Exporter Excel
+            </button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table id="table-cor">
+            <thead><tr>
+              <th>N° SAP</th><th>Libellé ordre</th><th>Type d'ouvrage</th><th>Type de travail</th>
+              <th>Statut terrain</th><th>Statut ordre</th><th>Entité</th><th>Ville</th>
+              <th>Date référence</th><th>Ancienneté</th>
+            </tr></thead>
+            <tbody id="table-cor-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div><!-- /view-correctif -->
+
+  </div><!-- /dashboard -->
+</main>
+
+<footer>
+  <span>GRDF · Agence AI Boucles de Seine Nord</span>
+  <span id="footer-date"></span>
+</footer>
+
+<script src="dashboard.js"></script>
+</body>
+</html>

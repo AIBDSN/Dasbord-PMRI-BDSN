@@ -6,9 +6,9 @@
 1. **index.html** — Page HTML complète avec formulaire et interface
 2. **style.css** — Tous les styles CSS 
 3. **dashboard.js** — Logique JavaScript (1000+ lignes) CORRIGÉE avec cumul planifié
-4. **ACTIVITY_MODEL_CORRECT.js** — Modèle d'activité avec **cumul planifié par semaine** pour 3 sites
+4. **ACTIVITY_MODEL_CORRECT.js** — Référence de modèle (optionnel) ; le dashboard utilise le modèle embarqué dans dashboard.js
 5. **logo.png** — Logo GRDF (blanc)
-6. **logowhite.png** — Logo GRDF (fond blanc)
+6. **logo-white.png** — Logo GRDF (fond blanc)
 
 ---
 
@@ -21,13 +21,16 @@ mon-projet/
 ├── index.html
 ├── style.css
 ├── dashboard.js
-├── ACTIVITY_MODEL_CORRECT.js
+├── ACTIVITY_MODEL_CORRECT.js (optionnel)
 ├── logo.png
-└── logowhite.png
+├── logo-white.png
+└── vendor/ (bibliothèques JS locales pour usage hors ligne)
 ```
 
 ### Étape 2 : Ouvrir dans le navigateur
 Ouvrir `index.html` dans **Chrome, Firefox ou Edge**
+
+Le projet fonctionne en **mode hors ligne** (sans accès Internet) si le dossier `vendor/` est présent.
 
 ### Étape 3 : Charger un fichier SAP
 - Cliquer sur **"Charger un fichier Excel"**
@@ -174,7 +177,7 @@ const minAcceptable = plannedCumul * 0.9;  // Changer 0.9 pour -10%, 0.85 pour -
 ## 🐛 Dépannage
 
 ### Erreur : "ACTIVITY_MODEL_CORRECT is not defined"
-**Solution** : Vérifier que ACTIVITY_MODEL_CORRECT.js est dans le même dossier
+**Solution** : Le modèle est déjà intégré dans dashboard.js ; ACTIVITY_MODEL_CORRECT.js peut rester en fichier de référence
 
 ### Les jauges ne changent pas de couleur
 **Solution** : Charger un fichier SAP pour avoir des données réalisées
@@ -244,3 +247,5 @@ Si vous avez des questions, consultez les commentaires dans le code (// ──) 
 **Version** : 2.0 — Complètement corrigée et testée ✅  
 **Date** : 04/03/2026  
 **Statut** : Prêt pour production
+
+

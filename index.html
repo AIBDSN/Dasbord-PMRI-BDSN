@@ -6,11 +6,11 @@
   <title>GRDF — Tableau de bord maintenance</title>
   <link rel="icon" type="image/png" href="logo.png"/>
   <link rel="stylesheet" href="style.css"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="vendor/html2canvas.min.js"></script>
+  <script src="vendor/pptxgen.bundle.js"></script>
 </head>
 <body>
 
@@ -39,6 +39,11 @@
       <span id="drop-label">Charger un fichier Excel</span>
     </div>
     <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="loadFile(this)"/>
+    <div id="file-avis-drop-zone" onclick="document.getElementById('fileAvisInput').click()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span id="drop-avis-label">Anomalies</span>
+    </div>
+    <input type="file" id="fileAvisInput" accept=".xlsx,.xls" style="display:none" onchange="loadAvisFile(this)"/>
     <div id="file-meta"></div>
   </div>
 </header>
@@ -67,6 +72,11 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           Correctif
           <span class="mode-tab-count mode-tab-count-cor" id="tab-cor-count">—</span>
+        </button>
+        <button class="mode-tab mode-tab-avis" id="tab-avis" onclick="setMode('avis')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Anomalies
+          <span class="mode-tab-count mode-tab-count-avis" id="tab-avis-count">—</span>
         </button>
       </div>
       <div class="mode-tabs-right">
@@ -160,10 +170,24 @@
           </div>
         </div>
         <div class="table-wrapper">
+          <div class="table-search-bar">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="table-search-input" id="search-prev" type="text" placeholder="Rechercher dans les colonnes…" oninput="filterTableSearch('prev')"/>
+            <button class="table-search-clear" onclick="clearTableSearch('prev')">✕ Effacer</button>
+            <span class="table-result-count" id="search-prev-count"></span>
+          </div>
           <table id="table-retard">
             <thead><tr>
-              <th>N° SAP</th><th>Libellé ordre</th><th>Type d'ouvrage</th><th>Type de travail</th>
-              <th>Statut terrain</th><th>Statut ordre</th><th>Entité</th><th>Ville</th><th>Date référence</th>
+              <th class="sortable" data-sort="numSAP" onclick="sortTable('prev',this,'numSAP','str')">N° SAP</th>
+              <th class="sortable" data-sort="ordre" onclick="sortTable('prev',this,'ordre','str')">Libellé ordre</th>
+              <th class="sortable" data-sort="ouvrage" onclick="sortTable('prev',this,'ouvrage','str')">Type d'ouvrage</th>
+              <th class="sortable" data-sort="typeTravail" onclick="sortTable('prev',this,'typeTravail','str')">Type de travail</th>
+              <th class="sortable" data-sort="nature" onclick="sortTable('prev',this,'nature','str')">Nature</th>
+              <th class="sortable" data-sort="statut" onclick="sortTable('prev',this,'statut','str')">Statut terrain</th>
+              <th class="sortable" data-sort="statutOrdre" onclick="sortTable('prev',this,'statutOrdre','str')">Statut ordre</th>
+              <th class="sortable" data-sort="entite" onclick="sortTable('prev',this,'entite','str')">Entité</th>
+              <th class="sortable" data-sort="ville" onclick="sortTable('prev',this,'ville','str')">Ville</th>
+              <th class="sortable" data-sort="dateRef" onclick="sortTable('prev',this,'dateRef','date')">Date référence</th>
             </tr></thead>
             <tbody id="table-retard-body"></tbody>
           </table>
@@ -251,11 +275,24 @@
           </div>
         </div>
         <div class="table-wrapper">
+          <div class="table-search-bar">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="table-search-input" id="search-cor" type="text" placeholder="Rechercher dans les colonnes…" oninput="filterTableSearch('cor')"/>
+            <button class="table-search-clear" onclick="clearTableSearch('cor')">✕ Effacer</button>
+            <span class="table-result-count" id="search-cor-count"></span>
+          </div>
           <table id="table-cor">
             <thead><tr>
-              <th>N° SAP</th><th>Libellé ordre</th><th>Type d'ouvrage</th><th>Type de travail</th>
-              <th>Statut terrain</th><th>Statut ordre</th><th>Entité</th><th>Ville</th>
-              <th>Date référence</th><th>Ancienneté</th>
+              <th class="sortable" onclick="sortTable('cor',this,'numSAP','str')">N° SAP</th>
+              <th class="sortable" onclick="sortTable('cor',this,'ordre','str')">Libellé ordre</th>
+              <th class="sortable" onclick="sortTable('cor',this,'ouvrage','str')">Type d'ouvrage</th>
+              <th class="sortable" onclick="sortTable('cor',this,'typeTravail','str')">Type de travail</th>
+              <th class="sortable" onclick="sortTable('cor',this,'statut','str')">Statut terrain</th>
+              <th class="sortable" onclick="sortTable('cor',this,'statutOrdre','str')">Statut ordre</th>
+              <th class="sortable" onclick="sortTable('cor',this,'entite','str')">Entité</th>
+              <th class="sortable" onclick="sortTable('cor',this,'ville','str')">Ville</th>
+              <th class="sortable" onclick="sortTable('cor',this,'dateRef','date')">Date référence</th>
+              <th class="sortable" onclick="sortTable('cor',this,'_ancDays','num')">Ancienneté</th>
             </tr></thead>
             <tbody id="table-cor-body"></tbody>
           </table>
@@ -263,6 +300,111 @@
       </section>
 
     </div><!-- /view-correctif -->
+
+    <!-- ══ VUE AVIS PM ══ -->
+    <div id="view-avis" style="display:none">
+      <div id="avis-empty-banner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:48vh;gap:14px;color:#64748b;text-align:center">
+        <div style="background:#fde8e8;border-radius:50%;width:80px;height:80px;display:flex;align-items:center;justify-content:center;color:#b91c1c">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <h3 style="font-size:18px;color:#1e293b;font-weight:600">Fichier Anomalies non chargé</h3>
+        <p style="font-size:13px;max-width:360px;line-height:1.6">Cliquez sur <strong>Anomalies</strong> dans l'en-tête pour charger votre extraction SAP des avis d'anomalies.</p>
+        <button onclick="document.getElementById('fileAvisInput').click()" style="display:inline-flex;align-items:center;gap:8px;background:#003189;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Charger le fichier Anomalies
+        </button>
+      </div>
+      <div id="avis-content" style="display:none">
+        <section class="kpis">
+          <div class="kpi kpi-blue">  <span class="kpi-value" id="avis-kpi-total">—</span>  <span class="kpi-label">Total avis</span></div>
+          <div class="kpi kpi-red">   <span class="kpi-value" id="avis-kpi-f0">—</span>      <span class="kpi-label">🚨 Fuites F0</span></div>
+          <div class="kpi kpi-red">   <span class="kpi-value" id="avis-kpi-f0-ot">—</span>   <span class="kpi-label">Fuites F0 sans OT</span></div>
+          <div class="kpi kpi-orange"><span class="kpi-value" id="avis-kpi-sans-ot">—</span> <span class="kpi-label">Sans OT correctif</span></div>
+          <div class="kpi kpi-purple"><span class="kpi-value" id="avis-kpi-ko">—</span>       <span class="kpi-label">Hors délai</span></div>
+          <div class="kpi kpi-slate" onclick="setAvisMode('nonqualif')" style="cursor:pointer" title="Voir les anomalies non identifiées dans le référentiel">
+            <span class="kpi-value" id="avis-kpi-nonqualif">—</span>
+            <span class="kpi-label">❓ Non qualifiées</span>
+          </div>
+          <div class="kpi kpi-green"> <span class="kpi-value" id="avis-kpi-lies">—</span>     <span class="kpi-label">Liés à un OT chargé</span></div>
+        </section>
+        <!-- KPIs BRC spécifiques -->
+        <section class="kpis-brc">
+          <div class="kpi-brc-header">🏢 Focus BRC<br><span style="font-size:10px;font-weight:500;opacity:.8">Suivi SVR10</span></div>
+          <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-p18')" style="cursor:pointer">
+            <div class="kpi-brc-label">P-18 mois</div>
+            <div class="kpi-brc-desc">Accès impossibles</div>
+            <div class="kpi-brc-total" id="brc-p18-total">—</div>
+            <div class="kpi-brc-sub" id="brc-p18-ko">—</div>
+          </div>
+          <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-p')" style="cursor:pointer">
+            <div class="kpi-brc-label">Prescrit (P)</div>
+            <div class="kpi-brc-desc">P-1 mois · P-3 mois · P-2 ans</div>
+            <div class="kpi-brc-total" id="brc-p-total">—</div>
+            <div class="kpi-brc-sub" id="brc-p-ko">—</div>
+          </div>
+          <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-r')" style="cursor:pointer">
+            <div class="kpi-brc-label">Recommandé (R)</div>
+            <div class="kpi-brc-desc">R-1 mois · R-2 ans · R-3</div>
+            <div class="kpi-brc-total" id="brc-r-total">—</div>
+            <div class="kpi-brc-sub" id="brc-r-ko">—</div>
+          </div>
+        </section>
+        <section class="charts-row-2">
+          <div class="chart-card">
+            <div class="chart-header"><span class="chart-title">Répartition par priorité</span></div>
+            <div class="chart-body chart-body-donut"><canvas id="chartAvisPrio"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header"><span class="chart-title">Ancienneté — avis sans OT</span></div>
+            <div class="chart-body chart-body-bar"><canvas id="chartAvisAge"></canvas></div>
+          </div>
+        </section>
+        <section class="table-section">
+          <div class="table-header">
+            <span class="table-title" id="avis-table-title">Anomalies</span>
+            <div class="table-actions">
+              <div class="tab-group">
+                <button class="tab-btn active" data-avis-mode="f0"        onclick="setAvisMode('f0')">🚨 Fuites F0</button>
+                <button class="tab-btn"        data-avis-mode="sans-ot"   onclick="setAvisMode('sans-ot')">⚠️ Sans OT</button>
+                <button class="tab-btn"        data-avis-mode="ko"        onclick="setAvisMode('ko')">⛔ Hors délai</button>
+                <button class="tab-btn"        data-avis-mode="nonqualif" onclick="setAvisMode('nonqualif')">❓ Non qualifiées</button>
+                <button class="tab-btn"        data-avis-mode="brc-p18"   onclick="setAvisMode('brc-p18')">🏢 BRC P-18</button>
+                <button class="tab-btn"        data-avis-mode="brc-p"     onclick="setAvisMode('brc-p')">🏢 BRC Prescrit</button>
+                <button class="tab-btn"        data-avis-mode="brc-r"     onclick="setAvisMode('brc-r')">🏢 BRC Recommandé</button>
+                <button class="tab-btn"        data-avis-mode="lies"      onclick="setAvisMode('lies')">🔗 Liés OT</button>
+                <button class="tab-btn"        data-avis-mode="all"       onclick="setAvisMode('all')">📋 Tous</button>
+              </div>
+              <button class="btn-excel" onclick="exportExcelAvis()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                Exporter Excel
+              </button>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <div class="table-search-bar">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="table-search-input" id="search-avis" type="text" placeholder="Rechercher dans les colonnes…" oninput="filterTableSearch('avis')"/>
+              <button class="table-search-clear" onclick="clearTableSearch('avis')">✕ Effacer</button>
+              <span class="table-result-count" id="search-avis-count"></span>
+            </div>
+            <table id="table-avis">
+              <thead><tr>
+                <th class="sortable" onclick="sortTable('avis',this,'avis','str')">N° Avis</th>
+                <th class="sortable" onclick="sortTable('avis',this,'prioGrp','prio')">Priorité</th>
+                <th class="sortable" onclick="sortTable('avis',this,'defail','str')">Défaillance</th>
+                <th class="sortable" onclick="sortTable('avis',this,'delaiLabel','str')">Délai MAINT0910</th>
+                <th class="sortable" onclick="sortTable('avis',this,'confCode','str')">Conformité</th>
+                <th class="sortable" onclick="sortTable('avis',this,'ville','str')">Ville</th>
+                <th class="sortable" onclick="sortTable('avis',this,'rue','str')">Adresse</th>
+                <th class="sortable" onclick="sortTable('avis',this,'ageDays','num')">Ancienneté</th>
+                <th>OT lié</th>
+              </tr></thead>
+              <tbody id="table-avis-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div><!-- /view-avis -->
 
   </div><!-- /dashboard -->
 </main>
@@ -275,3 +417,4 @@
 <script src="dashboard.js"></script>
 </body>
 </html>
+

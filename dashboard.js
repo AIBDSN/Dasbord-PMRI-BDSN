@@ -1919,19 +1919,19 @@ const MAINT0910_RULES = [
   //  MAINT0410 — ROB réseau : Accessibilité
   // ════════════════════════════════════════════
   { keys:['accès regard impossible rob','accès regard robinet','tampon bloqué','trappe bloquée'],
-    ref:'MAINT0410', ouvrage:'ROB',
+    ref:'MAINT0410', ouvrage:'ROB', gmaoStatut:'NACC',
     nature:'P', delai:'P-1 mois', jours:30,
     traitement:'Suppression anomalie lors de la GM — si impossible : info CE + statut NACC GMAO + consigne Carpathe + FP' },
   { keys:['accès robinet impossible','rallonge de manœuvre absente','tête robinet désaxée','rallonge manœuvre'],
-    ref:'MAINT0410', ouvrage:'ROB',
+    ref:'MAINT0410', ouvrage:'ROB', gmaoStatut:'NACC',
     nature:'P', delai:'P-1 mois', jours:30,
     traitement:'Traitement lors de la GM — si impossible : info CE + statut NACC GMAO + échange BERG + FP O2/OMER' },
   { keys:['non manœuvrabilité rob','robinet non manœuvrable','butée cassée','butée introuvable','perte position boisseau'],
-    ref:'MAINT0410', ouvrage:'ROB',
+    ref:'MAINT0410', ouvrage:'ROB', gmaoStatut:'NMAN',
     nature:'P', delai:'P-2 ans', jours:730,
     traitement:'Info CE + statut NMAN GMAO + consigne Carpathe + procédure déblocage BERG — si échec : FP + CS4P' },
   { keys:['manœuvre 2 agents impossible','manœuvre 1 agent impossible','démultiplicateur défectueux rob'],
-    ref:'MAINT0410', ouvrage:'ROB',
+    ref:'MAINT0410', ouvrage:'ROB', gmaoStatut:'NMAN',
     nature:'P', delai:'P-2 ans', jours:730,
     traitement:'Info hiérarchique + analyse BERG sous 7j + programmation réparation sous 3 mois' },
 
@@ -2182,6 +2182,7 @@ function parseAvisRow(row) {
     nature:     rule ? rule.nature     : '?',
     ref:        rule ? rule.ref        : '?',
     ouvrageRef: rule ? rule.ouvrage    : '?',
+    gmaoStatut: rule ? (rule.gmaoStatut || null) : null,
     otLie:      null,
   };
 }
@@ -2256,6 +2257,22 @@ function renderAvisKPIs() {
   setBrcKpi('brc-p18-total',  'brc-p18-ko',  brcP18.length, brcP18KO);
   setBrcKpi('brc-p-total',    'brc-p-ko',    brcP.length,   brcPKO);
   setBrcKpi('brc-r-total',    'brc-r-ko',    brcR.length,   brcRKO);
+
+  // ── KPIs ROB NACC / NMAN ──
+  const isROB = a => a.ouvrageAvis === 'ROB' || a.ouvrageRef === 'ROB';
+
+  const robNACC    = FILTERED_AVIS.filter(a => isROB(a) && a.gmaoStatut === 'NACC');
+  const robNACCKO  = robNACC.filter(a => a.confCode === 'KO').length;
+
+  const robNMAN    = FILTERED_AVIS.filter(a => isROB(a) && a.gmaoStatut === 'NMAN');
+  const robNMANKO  = robNMAN.filter(a => a.confCode === 'KO').length;
+
+  const robAll     = FILTERED_AVIS.filter(a => isROB(a));
+  const robAllKO   = robAll.filter(a => a.confCode === 'KO').length;
+
+  setBrcKpi('rob-nacc-total', 'rob-nacc-ko', robNACC.length, robNACCKO);
+  setBrcKpi('rob-nman-total', 'rob-nman-ko', robNMAN.length, robNMANKO);
+  setBrcKpi('rob-all-total',  'rob-all-ko',  robAll.length,  robAllKO);
 }
 
 function renderAvisCharts() {
@@ -2306,16 +2323,19 @@ function setAvisMode(mode) {
 
 function renderAvisTable() {
   const titles = {
-    'f0':      '🚨 Fuites F0',
-    'sans-ot': '⚠️ Anomalies sans OT correctif',
-    'ko':      '⛔ Hors délai MAINT0910',
-    'lies':    '🔗 Avis liés à un OT chargé',
+    'f0':       '🚨 Fuites F0',
+    'sans-ot':  '⚠️ Anomalies sans OT correctif',
+    'ko':       '⛔ Hors délai MAINT0910',
+    'lies':     '🔗 Avis liés à un OT chargé',
     'nonqualif':'❓ Anomalies non qualifiées',
-    'brc-p18': '🏢 BRC — Accès impossibles (P-18 mois)',
-    'brc-p':   '🏢 BRC — Anomalies Prescrites (hors P-18)',
-    'brc-r':   '🏢 BRC — Anomalies Recommandées',
-    'brc-pr':  '🏢 BRC — Toutes anomalies P/R',
-    'all':     '📋 Tous les avis',
+    'brc-p18':  '🏢 BRC — Accès impossibles (P-18 mois)',
+    'brc-p':    '🏢 BRC — Anomalies Prescrites (hors P-18)',
+    'brc-r':    '🏢 BRC — Anomalies Recommandées',
+    'brc-pr':   '🏢 BRC — Toutes anomalies P/R',
+    'rob-nacc': '🔩 ROB — NACC (accès impossible)',
+    'rob-nman': '🔩 ROB — NMAN (non manœuvrable)',
+    'rob-all':  '🔩 ROB — Toutes anomalies robinets',
+    'all':      '📋 Tous les avis',
   };
   let rows;
   switch(AVIS_MODE) {
@@ -2335,6 +2355,12 @@ function renderAvisTable() {
       a.nature==='R'); break;
     case 'brc-pr':  rows = FILTERED_AVIS.filter(a =>
       (a.ouvrageAvis==='BRC' || a.ouvrageRef==='BRC' || a.ouvrageRef==='BRC/CM')); break;
+    case 'rob-nacc': rows = FILTERED_AVIS.filter(a =>
+      (a.ouvrageAvis==='ROB' || a.ouvrageRef==='ROB') && a.gmaoStatut==='NACC'); break;
+    case 'rob-nman': rows = FILTERED_AVIS.filter(a =>
+      (a.ouvrageAvis==='ROB' || a.ouvrageRef==='ROB') && a.gmaoStatut==='NMAN'); break;
+    case 'rob-all':  rows = FILTERED_AVIS.filter(a =>
+      (a.ouvrageAvis==='ROB' || a.ouvrageRef==='ROB')); break;
     default:        rows = [...FILTERED_AVIS];
   }
   rows = [...rows].sort((a,b) =>
@@ -2364,6 +2390,12 @@ function exportExcelAvis() {
       (a.ouvrageAvis==='BRC'||a.ouvrageRef==='BRC'||a.ouvrageRef==='BRC/CM') && a.delaiLabel==='P-18 mois'); break;
     case 'brc-pr':   filtered = FILTERED_AVIS.filter(a =>
       (a.ouvrageAvis==='BRC'||a.ouvrageRef==='BRC'||a.ouvrageRef==='BRC/CM')); break;
+    case 'rob-nacc': filtered = FILTERED_AVIS.filter(a =>
+      (a.ouvrageAvis==='ROB'||a.ouvrageRef==='ROB') && a.gmaoStatut==='NACC'); break;
+    case 'rob-nman': filtered = FILTERED_AVIS.filter(a =>
+      (a.ouvrageAvis==='ROB'||a.ouvrageRef==='ROB') && a.gmaoStatut==='NMAN'); break;
+    case 'rob-all':  filtered = FILTERED_AVIS.filter(a =>
+      (a.ouvrageAvis==='ROB'||a.ouvrageRef==='ROB')); break;
     default:         filtered = [...FILTERED_AVIS];
   }
   filtered = [...filtered].sort((a,b) =>
@@ -2373,6 +2405,7 @@ function exportExcelAvis() {
   const tabLabels = {
     'f0':'Fuites_F0', 'sans-ot':'Sans_OT', 'ko':'Hors_Delai',
     'nonqualif':'Non_Qualifiees', 'brc-p18':'BRC_P18mois', 'brc-pr':'BRC_Toutes',
+    'rob-nacc':'ROB_NACC', 'rob-nman':'ROB_NMAN', 'rob-all':'ROB_Tous',
     'lies':'Lies_a_OT', 'all':'Tous'
   };
 
@@ -2383,6 +2416,7 @@ function exportExcelAvis() {
     'Cause':              a.cause,
     'Ouvrage détecté':    a.ouvrageAvis || '?',
     'Référentiel':        a.ref || '?',
+    'Statut GMAO':        a.gmaoStatut || '',
     'Délai réglementaire':a.delaiLabel,
     'Conformité':         a.conformite,
     'Dépassement (j)':    a.depasse > 0 ? a.depasse : '',

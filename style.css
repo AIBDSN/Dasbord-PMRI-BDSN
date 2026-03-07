@@ -128,8 +128,8 @@ main{padding:24px 32px 40px;max-width:1700px;margin:0 auto;}
 .chart-title{font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.5px;}
 .chart-legend-hint{font-size:11px;color:var(--text-muted);}
 .chart-body{padding:12px 16px 16px;min-height:220px;}
-.chart-body-donut{display:flex;align-items:center;justify-content:center;padding:12px 16px 16px;}
-.chart-body-donut canvas{max-width:280px;max-height:280px;width:280px !important;height:280px !important;}
+.chart-body-donut{display:flex;align-items:center;justify-content:center;padding:12px 16px 16px;min-height:300px;}
+.chart-body-donut canvas{max-width:340px;max-height:340px;width:340px !important;height:340px !important;}
 .chart-body-bar{padding:12px 16px 16px;height:320px;}
 
 /* ── Gauges ── */
@@ -153,7 +153,7 @@ main{padding:24px 32px 40px;max-width:1700px;margin:0 auto;}
 .gauge-plan-hors{font-size:10px;color:var(--text-muted);font-style:italic;}
 
 /* ── Charts row 3 ── */
-.charts-row-2{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:20px;}
+.charts-row-2{display:grid;grid-template-columns:1fr 1.5fr;gap:16px;margin-bottom:20px;}
 
 /* ── Table ── */
 .table-section{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
@@ -473,3 +473,9 @@ thead th.sort-desc::after { content: '↓'; opacity: 1; }
   white-space: nowrap;
   font-family: 'DM Mono', monospace;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   GRAND ÉCRAN TACTILE — 55" / 85" (≥ 1600px)
+   Optimisé pour affichage mural et interaction tactile
+   ══════════════════════════════════════════════════════════════ */
+

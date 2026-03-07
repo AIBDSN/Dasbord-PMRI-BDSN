@@ -1,10 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
-
 :root {
   --blue:#003189; --blue-mid:#1a4faf; --blue-light:#e8edf7; --blue-pale:#f0f4fc;
   --green:#1b7a3e; --green-light:#d6f0e0;
   --orange:#c95f00; --orange-light:#fdecd8;
   --red:#b91c1c; --red-light:#fde8e8;
+  --purple:#6d28d9;
   --gray:#64748b; --gray-light:#f1f5f9; --gray-border:#e2e8f0;
   --text:#1e293b; --text-muted:#64748b; --white:#ffffff;
   --radius:12px; --radius-sm:8px;
@@ -132,6 +131,8 @@ main{padding:24px 32px 40px;max-width:1700px;margin:0 auto;}
   font-weight:600;cursor:pointer;transition:all .2s;}
 .btn-pptx:hover{background:#a8341a;border-color:#fff;}
 .btn-pptx:disabled{opacity:.6;cursor:wait;}
+
+.btn-excel{display:flex;align-items:center;gap:7px;background:var(--green);
   border:none;color:#fff;padding:7px 14px;border-radius:var(--radius-sm);
   font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
   cursor:pointer;transition:all .2s;white-space:nowrap;}
@@ -306,3 +307,114 @@ footer{text-align:center;padding:18px 32px;color:var(--text-muted);font-size:11p
 
 @media(max-width:1100px){.charts-row-3{grid-template-columns:1fr 1fr;}}
 @media(max-width:700px){.charts-row-3{grid-template-columns:1fr;}.mode-tabs-bar{flex-direction:column;}}
+
+
+
+/* ── Bouton Avis PM dans le header ── */
+#file-avis-drop-zone{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(185,28,28,.18);
+  border:1.5px dashed rgba(255,160,160,.5);
+  color:rgba(255,210,210,.9);padding:7px 14px;
+  border-radius:var(--radius-sm);cursor:pointer;
+  font-size:12px;font-weight:500;transition:all .2s;white-space:nowrap;
+}
+#file-avis-drop-zone:hover{background:rgba(185,28,28,.35);border-color:rgba(255,160,160,.85);color:#fff;}
+#file-avis-drop-zone.loaded{background:rgba(27,122,62,.25);border-color:rgba(110,220,140,.6);color:rgba(200,255,215,.9);}
+
+/* ── Onglet Avis PM ── */
+.mode-tab-count-avis{background:#fde8e8;color:var(--red);}
+.mode-tab-avis.active{color:var(--red);}
+.mode-tab-avis.active .mode-tab-count{background:var(--red);color:#fff;}
+
+/* ── Badges priorité avis ── */
+.badge-prio{display:inline-block;padding:2px 8px;border-radius:20px;
+  font-size:10px;font-weight:700;white-space:nowrap;}
+.prio-f0   {background:#fde8e8;color:#7f1d1d;border:1px solid #fca5a5;}
+.prio-p1   {background:#fed7aa;color:#7c2d12;}
+.prio-p2   {background:#fef9c3;color:#713f12;}
+.prio-r1   {background:#dbeafe;color:#1e40af;}
+.prio-r2   {background:#ede9fe;color:#5b21b6;}
+.prio-r3   {background:#f0f9ff;color:#075985;}
+.prio-autre{background:var(--gray-light);color:var(--gray);}
+
+/* ── Badges conformité MAINT0910 ── */
+.badge-conf{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;}
+.conf-ok  {background:var(--green-light);color:var(--green);}
+.conf-ko  {background:var(--red-light);color:var(--red);}
+.conf-info{background:var(--blue-light);color:var(--blue-mid);}
+.conf-nf  {background:#fef9c3;color:#854d0e;}
+.conf-unk {background:var(--gray-light);color:var(--gray);}
+
+/* ── Badges OT lié ── */
+.badge-ot-lie{display:inline-block;padding:2px 8px;border-radius:4px;
+  font-size:10px;font-weight:700;font-family:'DM Mono',monospace;
+  background:var(--blue-light);color:var(--blue);border:1px solid #c7d9f5;}
+.badge-ot-ext{display:inline-block;padding:2px 8px;border-radius:4px;
+  font-size:10px;font-family:'DM Mono',monospace;
+  background:var(--gray-light);color:var(--gray);}
+.no-ot{color:var(--red);font-size:11px;font-weight:600;}
+
+/* ── Ancienneté critique ── */
+.age-crit{color:var(--red)!important;font-weight:700;}
+.age-warn{color:var(--orange)!important;font-weight:600;}
+
+/* ── Tri colonnes ── */
+thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  padding-right: 22px;
+  transition: background .15s;
+}
+thead th.sortable:hover { background: #1a4faf; }
+thead th.sortable::after {
+  content: '⇅';
+  position: absolute;
+  right: 6px;
+  opacity: .45;
+  font-size: 10px;
+}
+thead th.sort-asc::after  { content: '↑'; opacity: 1; }
+thead th.sort-desc::after { content: '↓'; opacity: 1; }
+
+/* Barre de recherche dans le tableau */
+.table-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--gray-border);
+  background: var(--gray-light);
+}
+.table-search-input {
+  flex: 1;
+  border: 1.5px solid var(--gray-border);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--white);
+  outline: none;
+  transition: border-color .2s;
+}
+.table-search-input:focus { border-color: var(--blue-mid); }
+.table-search-clear {
+  background: none;
+  border: 1.5px solid var(--gray-border);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.table-search-clear:hover { border-color: var(--red); color: var(--red); }
+.table-result-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-family: 'DM Mono', monospace;
+}

@@ -320,7 +320,10 @@ function isEnRetard(statut, dateRef, statutOrdre) {
   if (!['ACTI','EPR','PRG','OGDI'].includes(statut)) return false;
   if (statutOrdre && !statutOrdre.includes('Lancé')) return false;
   const d = parseDate(dateRef);
-  return d ? d < new Date('2026-03-03') : false;
+  if (!d) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today;
 }
 
 function statutLabel(s) {
@@ -404,10 +407,13 @@ function resetFilters() {
 // ── Navigation entre modes ────────────────────────────────────
 function setMode(mode) {
   CURRENT_MODE = mode;
-  document.getElementById('tab-prev').classList.toggle('active', mode === 'preventif');
-  document.getElementById('tab-cor').classList.toggle('active',  mode === 'correctif');
-  document.getElementById('view-preventif').style.display  = mode === 'preventif' ? '' : 'none';
-  document.getElementById('view-correctif').style.display  = mode === 'correctif' ? '' : 'none';
+  document.getElementById('tab-prev').classList.toggle('active',  mode === 'preventif');
+  document.getElementById('tab-cor').classList.toggle('active',   mode === 'correctif');
+  document.getElementById('tab-avis').classList.toggle('active',  mode === 'avis');
+  document.getElementById('view-preventif').style.display = mode === 'preventif' ? '' : 'none';
+  document.getElementById('view-correctif').style.display = mode === 'correctif' ? '' : 'none';
+  document.getElementById('view-avis').style.display      = mode === 'avis'      ? '' : 'none';
+  if (mode === 'avis') { renderAvis(); return; }
   FILTERED = mode === 'correctif' ? FILTERED_COR : FILTERED_PREV;
   render();
 }
@@ -973,7 +979,12 @@ function renderTable() {
   }
   rows.sort((a,b)=>(a.dateRef||0)-(b.dateRef||0));
   document.getElementById('table-section-title').textContent = `${labels[TABLE_MODE]} — ${rows.length} OT`;
-  renderTableRows(rows);
+  ROWS_PREV = rows;
+  // Réinitialiser état tri
+  SORT_STATE.prev = { col: null, dir: 1 };
+  document.querySelectorAll('#table-retard thead th').forEach(h => h.classList.remove('sort-asc','sort-desc'));
+  const q = document.getElementById('search-prev')?.value || '';
+  _renderPrevRows(ROWS_PREV, q);
 }
 
 function renderTableRows(rows) {
@@ -1186,38 +1197,18 @@ function renderCorTable() {
     default:             rows = [...FILTERED_COR];
   }
   rows.sort((a,b) => (a.dateRef||0) - (b.dateRef||0));
+  // Enrichir avec _ancDays pour le tri
+  const now2 = new Date();
+  rows.forEach(d => { d._ancDays = d.dateRef ? Math.floor((now2-d.dateRef)/86400000) : 0; });
 
   const titleEl = document.getElementById('cor-table-title');
   if (titleEl) titleEl.textContent = `${labels[COR_TABLE_MODE]} — ${rows.length} OT`;
 
-  const tbody = document.getElementById('table-cor-body');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  rows.forEach(d => {
-    const tr = document.createElement('tr');
-    const dateStr = d.dateRef ? d.dateRef.toLocaleDateString('fr-FR') : '—';
-    const bc = d.statut==='TERM'?'badge-term':d.statut==='TERM ANO'?'badge-ano':
-               d.statut==='ACTI'?'badge-acti':d.statut==='EPR'?'badge-epr':'badge-prg';
-    const soLabel = d.statutOrdre.includes('commercialement') ? 'Clôturé commercialement'
-                  : d.statutOrdre.includes('techniquement')   ? 'Clôturé techniquement'
-                  : d.statutOrdre === 'ouvert' ? 'Ouvert' : 'Lancé';
-    const soClass = d.statutOrdre.includes('commercialement') ? 'so-clocom'
-                  : d.statutOrdre.includes('techniquement')   ? 'so-clotec' : 'so-lance';
-    const anc = ancienneteLabel(d);
-    const ancBadge = anc ? `<span class="badge-anciennete ${anc.cls}">${anc.txt}</span>` : '—';
-    tr.innerHTML = `
-      <td class="mono num-sap">${esc(d.numSAP)}</td>
-      <td class="mono ordre-libelle">${esc(d.ordre)}</td>
-      <td><strong>${esc(d.ouvrage)}</strong></td>
-      <td>${esc(d.typeTravail)}</td>
-      <td><span class="badge-statut ${bc}">${esc(d.statut)}</span></td>
-      <td><span class="badge-so ${soClass}">${soLabel}</span></td>
-      <td>${esc(d.entite)}</td>
-      <td>${esc(d.ville)}</td>
-      <td class="${d.dateRef && d.dateRef < now && !d.termine ? 'date-retard' : ''}">${dateStr}</td>
-      <td>${ancBadge}</td>`;
-    tbody.appendChild(tr);
-  });
+  ROWS_COR = rows;
+  SORT_STATE.cor = { col: null, dir: 1 };
+  document.querySelectorAll('#table-cor thead th').forEach(h => h.classList.remove('sort-asc','sort-desc'));
+  const q = document.getElementById('search-cor')?.value || '';
+  _renderCorRows(ROWS_COR, q);
 }
 
 function exportExcelCor() {
@@ -1250,6 +1241,7 @@ function exportExcelCor() {
     'Ancienneté':      ancTxt(d),
   }));
   const ws = XLSX.utils.json_to_sheet(data);
+  ws['!autofilter'] = { ref: ws['!ref'] };
   ws['!cols'] = [{wch:14},{wch:45},{wch:22},{wch:20},{wch:14},{wch:24},{wch:14},{wch:22},{wch:14},{wch:12}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Correctif');
@@ -1260,6 +1252,10 @@ function exportExcelCor() {
 function destroyChart(id) { if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];} }
 function countBy(data,key) { const m={}; data.forEach(d=>{const v=d[key]||'N/A';m[v]=(m[v]||0)+1;}); return m; }
 function esc(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function getFilterValue(id, fallback='') {
+  const el = document.getElementById(id);
+  return el ? (el.value || fallback) : fallback;
+}
 
 document.getElementById('footer-date').textContent =
   'Tableau de bord généré le ' + new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
@@ -1303,6 +1299,7 @@ function exportExcel() {
     const cell = ws[XLSX.utils.encode_cell({r:0, c:C2})];
     if (cell) cell.s = { font:{bold:true}, fill:{fgColor:{rgb:'003189'}}, alignment:{horizontal:'center'} };
   }
+  ws['!autofilter'] = { ref: ws['!ref'] };
   ws['!cols'] = [
     {wch:14},{wch:45},{wch:14},{wch:22},{wch:20},{wch:14},{wch:24},
     {wch:14},{wch:22},{wch:14},{wch:30},{wch:10}
@@ -1314,9 +1311,9 @@ function exportExcel() {
   const meta = XLSX.utils.aoa_to_sheet([
     ['Export GRDF — Agence AI Boucles de Seine Nord'],
     ['Date d\'export', new Date().toLocaleDateString('fr-FR')],
-    ['Filtre entité', document.getElementById('filter-entite').value || 'Toutes'],
-    ['Filtre ouvrage', document.getElementById('filter-ouvrage').value || 'Tous'],
-    ['Filtre travail', document.getElementById('filter-travail').value || 'Tous'],
+    ['Filtre entité', getFilterValue('filter-entite', 'Toutes')],
+    ['Filtre ouvrage', getFilterValue('filter-ouvrage', 'Tous')],
+    ['Filtre travail', getFilterValue('filter-travail', 'Tous')],
     ['Nombre d\'OT exportés', rows.length],
   ]);
   XLSX.utils.book_append_sheet(wb, meta, 'Informations');
@@ -1355,9 +1352,9 @@ async function exportPDF() {
     const ds = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
     setTxt('#b4c8ff',7.5,'normal');
     pdf.text('Généré le '+ds, W-M, 7, {align:'right'});
-    const fe=document.getElementById('filter-entite').value||'Toutes entités';
-    const fo=document.getElementById('filter-ouvrage').value||'Tous ouvrages';
-    const ft=document.getElementById('filter-travail').value||'Tous types';
+    const fe=getFilterValue('filter-entite', 'Toutes entités');
+    const fo=getFilterValue('filter-ouvrage', 'Tous ouvrages');
+    const ft=getFilterValue('filter-travail', 'Tous types');
     pdf.text(`Filtres : ${fe} · ${fo} · ${ft} · ${FILTERED.length} OT`, W-M, 15, {align:'right'});
 
     const total   = FILTERED.length;
@@ -1652,4 +1649,496 @@ async function exportPPTX() {
     btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> PowerPoint';
     btn.disabled = false;
   }
+}
+
+
+
+// ════════════════════════════════════════════════════════════════
+//  MODULE AVIS PM — Chargement, parsing, rendu, export
+// ════════════════════════════════════════════════════════════════
+
+let AVIS_DATA = [];
+let AVIS_MODE = 'f0';
+
+const MAINT0910_RULES = [
+  { keys:['fuite externe','fuite sur ci','fuite clapet','fuite robinet','fuite tuyaut','fuite detend','fuite au niveau'],
+    nature:'P', delai:'IMMÉDIAT', jours:0, traitement:'Référentiel classification fuites — ISG immédiat' },
+  { keys:['ocg non accessible','regard visible et robinet non accessible'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Réalisation lors de la GM + info hiérarchique' },
+  { keys:['pénétration ci non étanche'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Traitement lors de la gamme' },
+  { keys:['dysfonctionnement détendeur'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Processus régulateur / ISG Dépannage' },
+  { keys:['indications erronées sur plaque repère oci'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Mesures conservatoires immédiates' },
+  { keys:['by pass frauduleux'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Info hiérarchique + fermeture robinet + Contentieux' },
+  { keys:['branchement improductif non sécurisé'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Procédure de sécurisation' },
+  { keys:['défaillance comptage','bruit compteur'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'ISG Dépannage' },
+  { keys:['lot de rappel','rappel de lot'],
+    nature:'P', delai:'P-3 mois', jours:90, traitement:'Remplacement détendeur + traçabilité GMAO' },
+  { keys:['accès impossible à la ci','accès impossible ci'],
+    nature:'P', delai:'P-18 mois', jours:548, traitement:'Procédure Accessibilité + info syndic' },
+  { keys:['accès immeuble impossible'],
+    nature:'P', delai:'P-18 mois', jours:548, traitement:'Procédure Accessibilité + info syndic' },
+  { keys:['accès impossible aux ouvrages','accès impossible conduite'],
+    nature:'P', delai:'P-18 mois', jours:548, traitement:'Procédure Accessibilité + info syndic' },
+  { keys:['absence ou non visibilité robinet','non visibilité robinet'],
+    nature:'P', delai:'P-2 ans', jours:730, traitement:'Info hiérarchique + info gestionnaire + démarche autorisation' },
+  { keys:['non déclenchement ddmp','absence de ddmp'],
+    nature:'P', delai:'P-2 ans', jours:730, traitement:'Info hiérarchique + programmation travaux' },
+  { keys:['réparation provisoire en place'],
+    nature:'P', delai:'P-2 ans', jours:730, traitement:'Vérification étanchéité + MAJ O²' },
+  { keys:['défaut de fixation sur ouvrage générant un danger'],
+    nature:'P', delai:'P-2 ans', jours:730, traitement:'Info CE immédiate + mesures conservatoires' },
+  { keys:['plaque d\'identif','plaque de repérage absente','absence plaque repère'],
+    nature:'R', delai:'R-1 mois', jours:30, traitement:'Réalisation lors de la GM' },
+  { keys:['indications erronées sur plaque repère'],
+    nature:'R', delai:'R-1 mois', jours:30, traitement:'Traitement lors de la GM + info hiérarchique' },
+  { keys:['sens de fermeture non conventionnelle'],
+    nature:'R', delai:'R-1 mois', jours:30, traitement:'Pose plaque informative T122' },
+  { keys:['objets déposés dans la gaine','problème fermeture','difficilement manoeuvrable','verre dormant'],
+    nature:'R', delai:'R-2 ans', jours:730, traitement:'Info hiérarchique + programmation' },
+  { keys:['fixations vétustes','vétusté tuyauterie','non manœuvrabilité oci','vétusté assemblages','vétusté accessoire'],
+    nature:'R', delai:'R-2 ans', jours:730, traitement:'Info hiérarchique + analyse technique' },
+  { keys:['tdr - adresse','tdr-année','tdr-','saisie non conforme','en local fermé','photo absente'],
+    nature:'INFO', delai:'N/A', jours:null, traitement:'Mise à jour données SAP — hors périmètre MAINT0910' },
+];
+
+function findMaintRule(defail) {
+  if (!defail) return null;
+  const df = defail.toLowerCase();
+  for (const rule of MAINT0910_RULES) {
+    if (rule.keys.some(k => df.includes(k))) return rule;
+  }
+  return null;
+}
+
+function loadAvisFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb  = XLSX.read(e.target.result, { type:'array', cellDates:true });
+      const ws  = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { defval:'' });
+      AVIS_DATA = raw.map(parseAvisRow);
+
+      document.getElementById('drop-avis-label').textContent = '✓ ' + file.name.replace(/\.xlsx?$/i,'');
+      document.getElementById('file-avis-drop-zone').classList.add('loaded');
+      document.getElementById('tab-avis-count').textContent = AVIS_DATA.length.toLocaleString('de-DE');
+
+      linkAvisToOT();
+
+      // Afficher le dashboard si pas encore visible
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('dashboard').style.display   = 'block';
+
+      // Switcher automatiquement sur l'onglet avis
+      setMode('avis');
+    } catch(err) { alert('Erreur lecture avis PM : ' + err.message); console.error(err); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseAvisRow(row) {
+  const defail = String(row['Code défaillance (Description)'] || '');
+  const prio   = String(row['Priorité'] || '');
+  const debut  = parseDate(row['Début souhaité (Europe/Paris)']);
+  const now    = new Date();
+  const ageDays = debut ? Math.floor((now - debut) / 86400000) : 0;
+  const otRaw  = String(row['Ordre de travail'] || '').trim();
+  const otNum  = /^[-–\s]*$/.test(otRaw) ? '' : otRaw;
+  const hasOT  = otNum.length > 0;
+
+  const rule = findMaintRule(defail);
+  let conformite, confCode, depasse = 0;
+  if (rule) {
+    if (rule.nature === 'INFO') {
+      conformite = 'ℹ️ Hors périmètre'; confCode = 'INFO';
+    } else if (rule.jours === null) {
+      conformite = '⚠️ Sans délai fixé'; confCode = 'NF';
+    } else {
+      depasse = ageDays - rule.jours;
+      if (depasse > 0) { conformite = '⛔ +' + depasse + 'j'; confCode = 'KO'; }
+      else             { conformite = '✅ Dans les délais';    confCode = 'OK'; }
+    }
+  } else {
+    conformite = '❓ Non qualifié'; confCode = '?';
+  }
+
+  const isF0    = prio.includes('F0');
+  const prioGrp = isF0            ? 'F0'
+                : prio.startsWith('P1') ? 'P1'
+                : prio.startsWith('P2') ? 'P2'
+                : prio.startsWith('R1') ? 'R1'
+                : prio.startsWith('R2') ? 'R2'
+                : prio.startsWith('R3') ? 'R3' : 'Autre';
+
+  return {
+    avis:       String(row['Avis'] || '').trim(),
+    prio, prioGrp, isF0,
+    defail,
+    cause:      String(row['Code de la cause (Description)'] || ''),
+    ville:      String(row['Ville normalisée'] || ''),
+    rue:        (String(row['Nº de rue'] || '') + ' ' + String(row['Rue'] || '')).trim(),
+    objet:      String(row["Désignation de l'objet technique"] || ''),
+    decl:       String(row["Déclaré par nom d'utilisateur"] || ''),
+    dateRef:    debut,
+    dateStr:    debut ? debut.toLocaleDateString('fr-FR') : '—',
+    ageDays,    hasOT, otNum,
+    conformite, confCode, depasse,
+    delaiLabel: rule ? rule.delai      : '—',
+    traitement: rule ? rule.traitement : 'Vérifier MAINT0910',
+    nature:     rule ? rule.nature     : '?',
+    otLie:      null,
+  };
+}
+
+function linkAvisToOT() {
+  if (!ALL_DATA.length) return;
+  AVIS_DATA.forEach(a => {
+    if (!a.hasOT) return;
+    const found = ALL_DATA.find(d => d.numSAP === a.otNum || d.ordre === a.otNum);
+    a.otLie = found ? found.numSAP : null;
+  });
+}
+
+const PRIO_ORD_AVIS = { F0:0, P1:1, P2:2, R1:3, R2:4, R3:5, Autre:6 };
+
+function renderAvis() {
+  if (!AVIS_DATA.length) {
+    document.getElementById('avis-empty-banner').style.display = '';
+    document.getElementById('avis-content').style.display      = 'none';
+    return;
+  }
+  document.getElementById('avis-empty-banner').style.display = 'none';
+  document.getElementById('avis-content').style.display      = '';
+  renderAvisKPIs();
+  renderAvisCharts();
+  renderAvisTable();
+}
+
+function renderAvisKPIs() {
+  const total    = AVIS_DATA.length;
+  const f0       = AVIS_DATA.filter(a => a.isF0).length;
+  const f0SansOT = AVIS_DATA.filter(a => a.isF0 && !a.hasOT).length;
+  const sansOT   = AVIS_DATA.filter(a => !a.hasOT).length;
+  const ko       = AVIS_DATA.filter(a => a.confCode === 'KO').length;
+  const lies     = AVIS_DATA.filter(a => a.otLie).length;
+
+  document.getElementById('avis-kpi-total').textContent   = total.toLocaleString('de-DE');
+  document.getElementById('avis-kpi-f0').textContent      = f0;
+  document.getElementById('avis-kpi-f0-ot').textContent   = f0SansOT;
+  document.getElementById('avis-kpi-sans-ot').textContent = sansOT;
+  document.getElementById('avis-kpi-ko').textContent      = ko;
+  document.getElementById('avis-kpi-lies').textContent    = lies;
+}
+
+function renderAvisCharts() {
+  const prioMap  = {};
+  AVIS_DATA.forEach(a => prioMap[a.prioGrp] = (prioMap[a.prioGrp]||0)+1);
+  const pOrder   = ['F0','P1','P2','R1','R2','R3','Autre'];
+  const pLabels  = { F0:'F0 Fuite', P1:'P1 Prescrit', P2:'P2 Prescrit', R1:'R1 Recom.', R2:'R2 Recom.', R3:'R3 Recom.', Autre:'Autre' };
+  const pColors  = { F0:'#7f1d1d', P1:'#b91c1c', P2:'#c95f00', R1:'#1a4faf', R2:'#6d28d9', R3:'#0f766e', Autre:'#94a3b8' };
+  const keys     = pOrder.filter(k => prioMap[k]);
+
+  if (CHARTS.avisPrio) CHARTS.avisPrio.destroy();
+  CHARTS.avisPrio = new Chart(
+    document.getElementById('chartAvisPrio').getContext('2d'), {
+      type:'doughnut',
+      data:{ labels: keys.map(k=>pLabels[k]),
+             datasets:[{ data: keys.map(k=>prioMap[k]),
+                         backgroundColor: keys.map(k=>pColors[k]), borderWidth:2 }] },
+      options:{ responsive:true, plugins:{ legend:{ position:'right', labels:{ font:{size:11} } } } }
+    }
+  );
+
+  const buckets  = ['0–3 mois','3–6 mois','6–12 mois','1–2 ans','> 2 ans'];
+  const bucketFn = d => d<=90?'0–3 mois':d<=180?'3–6 mois':d<=365?'6–12 mois':d<=730?'1–2 ans':'> 2 ans';
+  const bMap     = {};
+  AVIS_DATA.filter(a=>!a.hasOT).forEach(a => { const b=bucketFn(a.ageDays); bMap[b]=(bMap[b]||0)+1; });
+
+  if (CHARTS.avisAge) CHARTS.avisAge.destroy();
+  CHARTS.avisAge = new Chart(
+    document.getElementById('chartAvisAge').getContext('2d'), {
+      type:'bar',
+      data:{ labels: buckets,
+             datasets:[{ label:'Avis sans OT', data: buckets.map(b=>bMap[b]||0),
+               backgroundColor:['#1b7a3e','#c95f00','#c95f00','#b91c1c','#7f1d1d'], borderRadius:4 }] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{ y:{ beginAtZero:true, grid:{color:'#e2e8f0'} }, x:{ grid:{display:false} } } }
+    }
+  );
+}
+
+function setAvisMode(mode) {
+  AVIS_MODE = mode;
+  document.querySelectorAll('[data-avis-mode]').forEach(b =>
+    b.classList.toggle('active', b.dataset.avisMode === mode)
+  );
+  renderAvisTable();
+}
+
+function renderAvisTable() {
+  const titles = {
+    'f0':     '🚨 Fuites F0',
+    'sans-ot':'⚠️ Avis sans OT correctif',
+    'ko':     '⛔ Hors délai MAINT0910',
+    'lies':   '🔗 Avis liés à un OT chargé',
+    'all':    '📋 Tous les avis',
+  };
+  let rows;
+  switch(AVIS_MODE) {
+    case 'f0':      rows = AVIS_DATA.filter(a => a.isF0);           break;
+    case 'sans-ot': rows = AVIS_DATA.filter(a => !a.hasOT);         break;
+    case 'ko':      rows = AVIS_DATA.filter(a => a.confCode==='KO'); break;
+    case 'lies':    rows = AVIS_DATA.filter(a => a.otLie);           break;
+    default:        rows = [...AVIS_DATA];
+  }
+  rows = [...rows].sort((a,b) =>
+    (PRIO_ORD_AVIS[a.prioGrp]??9) - (PRIO_ORD_AVIS[b.prioGrp]??9) || b.ageDays - a.ageDays
+  );
+  document.getElementById('avis-table-title').textContent =
+    (titles[AVIS_MODE] || 'Avis') + ' — ' + rows.length + ' avis';
+
+  ROWS_AVIS = rows;
+  SORT_STATE.avis = { col: null, dir: 1 };
+  document.querySelectorAll('#table-avis thead th').forEach(h => h.classList.remove('sort-asc','sort-desc'));
+  const q = document.getElementById('search-avis')?.value || '';
+  _renderAvisRows(ROWS_AVIS, q);
+}
+
+function exportExcelAvis() {
+  if (!AVIS_DATA.length) return;
+
+  // Reproduit le même filtre que renderAvisTable
+  let filtered;
+  switch(AVIS_MODE) {
+    case 'f0':      filtered = AVIS_DATA.filter(a => a.isF0);           break;
+    case 'sans-ot': filtered = AVIS_DATA.filter(a => !a.hasOT);         break;
+    case 'ko':      filtered = AVIS_DATA.filter(a => a.confCode==='KO'); break;
+    case 'lies':    filtered = AVIS_DATA.filter(a => a.otLie);           break;
+    default:        filtered = [...AVIS_DATA];
+  }
+  filtered = [...filtered].sort((a,b) =>
+    (PRIO_ORD_AVIS[a.prioGrp]??9) - (PRIO_ORD_AVIS[b.prioGrp]??9) || b.ageDays - a.ageDays
+  );
+
+  const tabLabels = {
+    'f0':'Fuites_F0', 'sans-ot':'Sans_OT', 'ko':'Hors_Delai_MAINT0910',
+    'lies':'Lies_a_OT', 'all':'Tous'
+  };
+
+  const rows = filtered.map(a => ({
+    'N° Avis':            a.avis,
+    'Priorité':           a.prio,
+    'Défaillance':        a.defail,
+    'Cause':              a.cause,
+    'Nature MAINT0910':   a.nature,
+    'Délai MAINT0910':    a.delaiLabel,
+    'Conformité':         a.conformite,
+    'Dépassement (j)':    a.depasse > 0 ? a.depasse : '',
+    'Traitement prescrit':a.traitement,
+    'Ville':              a.ville,
+    'Adresse':            a.rue,
+    'Ancienneté (j)':     a.ageDays,
+    'Date début':         a.dateStr,
+    'OT correctif':       a.otNum || '',
+    'OT lié au fichier':  a.otLie ? 'Oui (' + a.otLie + ')' : (a.hasOT ? 'Externe' : 'Non'),
+  }));
+
+  const ws  = XLSX.utils.json_to_sheet(rows);
+  ws['!autofilter'] = { ref: ws['!ref'] };
+  ws['!cols'] = [{wch:12},{wch:14},{wch:40},{wch:30},{wch:8},{wch:14},{wch:22},{wch:10},
+                 {wch:40},{wch:20},{wch:28},{wch:10},{wch:12},{wch:16},{wch:12}];
+  const wbX = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wbX, ws, 'Avis PM');
+  const label = tabLabels[AVIS_MODE] || 'Avis';
+  XLSX.writeFile(wbX, `GRDF_Avis_PM_${label}_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TRI ET RECHERCHE DANS LES TABLEAUX
+// ════════════════════════════════════════════════════════════════
+
+// État de tri par table
+const SORT_STATE = { prev:{col:null,dir:1}, cor:{col:null,dir:1}, avis:{col:null,dir:1} };
+// Données courantes par table (après filtre onglet, avant tri/recherche)
+let ROWS_PREV = [], ROWS_COR = [], ROWS_AVIS = [];
+
+const PRIO_ORD_SORT = { F0:0, P1:1, P2:2, R1:3, R2:4, R3:5, Autre:6 };
+
+function sortTable(table, th, col, type) {
+  const state = SORT_STATE[table];
+  // Inverser si même colonne
+  state.dir = (state.col === col) ? -state.dir : 1;
+  state.col = col;
+
+  // Mise à jour visuelle des en-têtes
+  const thead = th.closest('thead');
+  thead.querySelectorAll('th').forEach(h => h.classList.remove('sort-asc','sort-desc'));
+  th.classList.add(state.dir === 1 ? 'sort-asc' : 'sort-desc');
+
+  // Comparateur selon type
+  const cmp = (a, b) => {
+    let va = a[col], vb = b[col];
+    if (type === 'date') {
+      va = va ? va.getTime() : 0;
+      vb = vb ? vb.getTime() : 0;
+      return (va - vb) * state.dir;
+    }
+    if (type === 'num') {
+      return ((+va||0) - (+vb||0)) * state.dir;
+    }
+    if (type === 'prio') {
+      return ((PRIO_ORD_SORT[va]??9) - (PRIO_ORD_SORT[vb]??9)) * state.dir;
+    }
+    return String(va||'').localeCompare(String(vb||''), 'fr', {sensitivity:'base'}) * state.dir;
+  };
+
+  if (table === 'prev') {
+    ROWS_PREV = [...ROWS_PREV].sort(cmp);
+    _renderPrevRows(ROWS_PREV, document.getElementById('search-prev').value);
+  } else if (table === 'cor') {
+    ROWS_COR = [...ROWS_COR].sort(cmp);
+    _renderCorRows(ROWS_COR, document.getElementById('search-cor').value);
+  } else {
+    ROWS_AVIS = [...ROWS_AVIS].sort(cmp);
+    _renderAvisRows(ROWS_AVIS, document.getElementById('search-avis').value);
+  }
+}
+
+// ── Recherche texte ──────────────────────────────────────────
+function filterTableSearch(table) {
+  const query = document.getElementById('search-' + table).value;
+  if (table === 'prev')  _renderPrevRows(ROWS_PREV, query);
+  if (table === 'cor')   _renderCorRows(ROWS_COR, query);
+  if (table === 'avis')  _renderAvisRows(ROWS_AVIS, query);
+}
+
+function clearTableSearch(table) {
+  document.getElementById('search-' + table).value = '';
+  filterTableSearch(table);
+}
+
+function matchSearch(row, query) {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  return Object.values(row).some(v =>
+    v && String(v).toLowerCase().includes(q)
+  );
+}
+
+// ── Renderers avec recherche ─────────────────────────────────
+
+function _renderPrevRows(rows, query) {
+  const tbody = document.getElementById('table-retard-body');
+  tbody.innerHTML = '';
+  const visible = rows.filter(d => matchSearch(d, query));
+  document.getElementById('search-prev-count').textContent =
+    query ? `${visible.length} / ${rows.length} résultats` : '';
+
+  visible.forEach(d => {
+    const tr = document.createElement('tr');
+    const dateStr = d.dateRef ? d.dateRef.toLocaleDateString('fr-FR') : '—';
+    const bc = d.statut==='TERM'?'badge-term':d.statut==='TERM ANO'?'badge-ano':
+               d.statut==='ACTI'?'badge-acti':d.statut==='EPR'?'badge-epr':'badge-prg';
+    const soLabel = d.statutOrdre.includes('commercialement') ? 'Clôturé commercialement'
+                  : d.statutOrdre.includes('techniquement')   ? 'Clôturé techniquement' : 'Lancé';
+    const soClass = d.statutOrdre.includes('commercialement') ? 'so-clocom'
+                  : d.statutOrdre.includes('techniquement')   ? 'so-clotec' : 'so-lance';
+    const natureCls = d.nature==='Préventif'?'badge-nature-prev':d.nature==='Correctif'?'badge-nature-cor':
+                      d.nature==='Exploitation'?'badge-nature-exp':'badge-nature-autre';
+    tr.innerHTML =
+      `<td class="mono num-sap">${esc(d.numSAP)}</td>` +
+      `<td class="mono ordre-libelle">${esc(d.ordre)}</td>` +
+      `<td><strong>${esc(d.ouvrage)}</strong></td>` +
+      `<td>${esc(d.typeTravail)}</td>` +
+      `<td><span class="badge-nature ${natureCls}">${esc(d.nature)}</span></td>` +
+      `<td><span class="badge-statut ${bc}">${esc(d.statut)}</span></td>` +
+      `<td><span class="badge-so ${soClass}">${soLabel}</span></td>` +
+      `<td>${esc(d.entite)}</td>` +
+      `<td>${esc(d.ville)}</td>` +
+      `<td class="${d.enRetard?'date-retard':''}">${dateStr}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function _renderCorRows(rows, query) {
+  const tbody = document.getElementById('table-cor-body');
+  tbody.innerHTML = '';
+  const now = new Date();
+  const visible = rows.filter(d => matchSearch(d, query));
+  document.getElementById('search-cor-count').textContent =
+    query ? `${visible.length} / ${rows.length} résultats` : '';
+
+  visible.forEach(d => {
+    const tr = document.createElement('tr');
+    const dateStr = d.dateRef ? d.dateRef.toLocaleDateString('fr-FR') : '—';
+    const bc = d.statut==='TERM'?'badge-term':d.statut==='TERM ANO'?'badge-ano':
+               d.statut==='ACTI'?'badge-acti':d.statut==='EPR'?'badge-epr':'badge-prg';
+    const soLabel = d.statutOrdre.includes('commercialement')?'Clôturé commercialement':
+                    d.statutOrdre.includes('techniquement')?'Clôturé techniquement':'Lancé';
+    const soClass = d.statutOrdre.includes('commercialement')?'so-clocom':
+                    d.statutOrdre.includes('techniquement')?'so-clotec':'so-lance';
+    const ancDays = d.dateRef ? Math.floor((now-d.dateRef)/86400000) : 0;
+    const ancCls = ancDays>=365?'badge-anc-danger':ancDays>=180?'badge-anc-warn':ancDays>=30?'badge-anc-low':'badge-anc-ok';
+    const ancTxt = d.termine||!d.statutOrdre.includes('Lancé') ? 'Clôturé'
+                 : ancDays>=365 ? '>12 mois' : ancDays>=180 ? '6–12 mois'
+                 : ancDays>=30  ? '1–6 mois' : '<1 mois';
+    tr.innerHTML =
+      `<td class="mono num-sap">${esc(d.numSAP)}</td>` +
+      `<td class="mono ordre-libelle">${esc(d.ordre)}</td>` +
+      `<td><strong>${esc(d.ouvrage)}</strong></td>` +
+      `<td>${esc(d.typeTravail)}</td>` +
+      `<td><span class="badge-statut ${bc}">${esc(d.statut)}</span></td>` +
+      `<td><span class="badge-so ${soClass}">${soLabel}</span></td>` +
+      `<td>${esc(d.entite)}</td>` +
+      `<td>${esc(d.ville)}</td>` +
+      `<td>${dateStr}</td>` +
+      `<td><span class="badge-anciennete ${ancCls}">${ancTxt}</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function _renderAvisRows(rows, query) {
+  const tbody = document.getElementById('table-avis-body');
+  tbody.innerHTML = '';
+  const visible = rows.filter(a => matchSearch(a, query));
+  document.getElementById('search-avis-count').textContent =
+    query ? `${visible.length} / ${rows.length} résultats` : '';
+
+  const prioLbl = { F0:'F0 Fuite', P1:'P1 Prescrit', P2:'P2 Prescrit',
+                    R1:'R1 Recom.', R2:'R2 Recom.', R3:'R3 Recom.', Autre:'Autre' };
+  const prioCls = { F0:'prio-f0', P1:'prio-p1', P2:'prio-p2',
+                    R1:'prio-r1', R2:'prio-r2', R3:'prio-r3', Autre:'prio-autre' };
+  const confCls = { OK:'conf-ok', KO:'conf-ko', INFO:'conf-info', NF:'conf-nf', '?':'conf-unk' };
+
+  visible.forEach(a => {
+    const tr  = document.createElement('tr');
+    const pcl = prioCls[a.prioGrp] || 'prio-autre';
+    const ccl = confCls[a.confCode] || 'conf-unk';
+    const ageCl = a.ageDays>730?'age-crit':a.ageDays>365?'age-warn':'';
+    let otCell;
+    if (a.otLie)      otCell = `<span class="badge-ot-lie">${esc(a.otLie)}</span>`;
+    else if (a.hasOT) otCell = `<span class="badge-ot-ext">${esc(a.otNum.substring(0,22))}</span>`;
+    else              otCell = `<span class="no-ot">Aucun OT</span>`;
+
+    tr.innerHTML =
+      `<td class="mono" style="font-size:11px">${esc(a.avis)}</td>` +
+      `<td><span class="badge-prio ${pcl}">${prioLbl[a.prioGrp]||a.prioGrp}</span></td>` +
+      `<td style="max-width:230px;white-space:normal;line-height:1.3"><strong style="font-size:11.5px">${esc(a.defail)}</strong></td>` +
+      `<td style="font-size:10.5px;color:#64748b">${esc(a.delaiLabel)}</td>` +
+      `<td><span class="badge-conf ${ccl}">${esc(a.conformite)}</span></td>` +
+      `<td>${esc(a.ville)}</td>` +
+      `<td style="font-size:11px;color:#475569;max-width:190px;white-space:normal">${esc(a.rue)}</td>` +
+      `<td class="${ageCl}" style="font-family:'DM Mono',monospace;font-size:11.5px">${a.ageDays>0?a.ageDays+'j':a.dateStr}</td>` +
+      `<td>${otCell}</td>`;
+    tbody.appendChild(tr);
+  });
 }

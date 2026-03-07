@@ -1716,6 +1716,7 @@ async function exportPPTX() {
 let AVIS_DATA = [];
 let AVIS_MODE = 'f0';
 
+<<<<<<< HEAD
 // ── Référentiel complet des anomalies : SVR10 (CI/CM/BRC) + MAINT0410 (ROB/RDD) + MAINT0520 (SIN) ──
 // Chaque règle : keys (mots-clés défaillance), ref (document source), ouvrage (famille), nature (P/R/INFO),
 // delai (libellé), jours (délai en jours, null = non fixé), traitement (action préconisée)
@@ -2062,6 +2063,53 @@ const MAINT0910_RULES = [
     ref:'INFO', ouvrage:'INFO',
     nature:'INFO', delai:'N/A', jours:null,
     traitement:'Mise à jour données SAP — hors périmètre MAINT0910' },
+=======
+const MAINT0910_RULES = [
+  { keys:['fuite externe','fuite sur ci','fuite clapet','fuite robinet','fuite tuyaut','fuite detend','fuite au niveau'],
+    nature:'P', delai:'IMMÉDIAT', jours:0, traitement:'Référentiel classification fuites — ISG immédiat' },
+  { keys:['ocg non accessible','regard visible et robinet non accessible'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Réalisation lors de la GM + info hiérarchique' },
+  { keys:['pénétration ci non étanche'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Traitement lors de la gamme' },
+  { keys:['dysfonctionnement détendeur'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Processus régulateur / ISG Dépannage' },
+  { keys:['indications erronées sur plaque repère oci'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Mesures conservatoires immédiates' },
+  { keys:['by pass frauduleux'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Info hiérarchique + fermeture robinet + Contentieux' },
+  { keys:['branchement improductif non sécurisé'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'Procédure de sécurisation' },
+  { keys:['défaillance comptage','bruit compteur'],
+    nature:'P', delai:'P-1 mois', jours:30, traitement:'ISG Dépannage' },
+  { keys:['lot de rappel','rappel de lot'],
+    nature:'P', delai:'P-3 mois', jours:90, traitement:'Remplacement détendeur + traçabilité GMAO' },
+  { keys:['accès impossible à la ci','accès impossible ci'],
+    nature:'P', delai:'P-18 mois', jours:548, traitement:'Procédure Accessibilité + info syndic' },
+  { keys:['accès immeuble impossible'],
+    nature:'P', delai:'P-18 mois', jours:548, traitement:'Procédure Accessibilité + info syndic' },
+  { keys:['accès impossible aux ouvrages','accès impossible conduite'],
+    nature:'P', delai:'P-18 mois', jours:548, traitement:'Procédure Accessibilité + info syndic' },
+  { keys:['absence ou non visibilité robinet','non visibilité robinet'],
+    nature:'P', delai:'P-2 ans', jours:730, traitement:'Info hiérarchique + info gestionnaire + démarche autorisation' },
+  { keys:['non déclenchement ddmp','absence de ddmp'],
+    nature:'P', delai:'P-2 ans', jours:730, traitement:'Info hiérarchique + programmation travaux' },
+  { keys:['réparation provisoire en place'],
+    nature:'P', delai:'P-2 ans', jours:730, traitement:'Vérification étanchéité + MAJ O²' },
+  { keys:['défaut de fixation sur ouvrage générant un danger'],
+    nature:'P', delai:'P-2 ans', jours:730, traitement:'Info CE immédiate + mesures conservatoires' },
+  { keys:['plaque d\'identif','plaque de repérage absente','absence plaque repère'],
+    nature:'R', delai:'R-1 mois', jours:30, traitement:'Réalisation lors de la GM' },
+  { keys:['indications erronées sur plaque repère'],
+    nature:'R', delai:'R-1 mois', jours:30, traitement:'Traitement lors de la GM + info hiérarchique' },
+  { keys:['sens de fermeture non conventionnelle'],
+    nature:'R', delai:'R-1 mois', jours:30, traitement:'Pose plaque informative T122' },
+  { keys:['objets déposés dans la gaine','problème fermeture','difficilement manoeuvrable','verre dormant'],
+    nature:'R', delai:'R-2 ans', jours:730, traitement:'Info hiérarchique + programmation' },
+  { keys:['fixations vétustes','vétusté tuyauterie','non manœuvrabilité oci','vétusté assemblages','vétusté accessoire'],
+    nature:'R', delai:'R-2 ans', jours:730, traitement:'Info hiérarchique + analyse technique' },
+  { keys:['tdr - adresse','tdr-année','tdr-','saisie non conforme','en local fermé','photo absente'],
+    nature:'INFO', delai:'N/A', jours:null, traitement:'Mise à jour données SAP — hors périmètre MAINT0910' },
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
 ];
 
 function findMaintRule(defail) {
@@ -2083,10 +2131,13 @@ function loadAvisFile(input) {
       const ws  = wb.Sheets[wb.SheetNames[0]];
       const raw = XLSX.utils.sheet_to_json(ws, { defval:'' });
       AVIS_DATA = raw.map(parseAvisRow);
+<<<<<<< HEAD
       // Enrichir les selects entité/ouvrage avec les valeurs issues des avis
       mergeAvisFilters();
       // Appliquer les filtres entité/ouvrage déjà actifs
       applyAvisFilter();
+=======
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
 
       document.getElementById('drop-avis-label').textContent = '✓ ' + file.name.replace(/\.xlsx?$/i,'');
       document.getElementById('file-avis-drop-zone').classList.add('loaded');
@@ -2100,7 +2151,11 @@ function loadAvisFile(input) {
 
       // Switcher automatiquement sur l'onglet avis
       setMode('avis');
+<<<<<<< HEAD
     } catch(err) { alert('Erreur lecture Anomalies : ' + err.message); console.error(err); }
+=======
+    } catch(err) { alert('Erreur lecture avis PM : ' + err.message); console.error(err); }
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
   };
   reader.readAsArrayBuffer(file);
 }
@@ -2112,12 +2167,16 @@ function parseAvisRow(row) {
   const now    = new Date();
   const ageDays = debut ? Math.floor((now - debut) / 86400000) : 0;
   const otRaw  = String(row['Ordre de travail'] || '').trim();
+<<<<<<< HEAD
   // Extraire le numéro SAP entre parenthèses ex: "Anomalie / Avis N: GDK... / (100674248)" → "100674248"
   const otMatch = otRaw.match(/\((\d{6,12})\)\s*$/);
   const otNum   = otMatch ? otMatch[1]
                 : /^[-–\s]*$/.test(otRaw) ? ''
                 : /^\d{6,12}$/.test(otRaw) ? otRaw   // déjà un numéro seul
                 : otRaw;
+=======
+  const otNum  = /^[-–\s]*$/.test(otRaw) ? '' : otRaw;
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
   const hasOT  = otNum.length > 0;
 
   const rule = findMaintRule(defail);
@@ -2144,6 +2203,7 @@ function parseAvisRow(row) {
                 : prio.startsWith('R2') ? 'R2'
                 : prio.startsWith('R3') ? 'R3' : 'Autre';
 
+<<<<<<< HEAD
   // Entité (même logique que les OTs)
   const entiteAvis = shortEntite(String(row['Entité en charge'] || ''));
 
@@ -2162,6 +2222,8 @@ function parseAvisRow(row) {
                     : sourceOuv.includes('CI') || sourceOuv.includes('CM') || sourceOuv.includes('CONDUIT') ? 'CI/CM'
                     : rule ? rule.ouvrage : '?';
 
+=======
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
   return {
     avis:       String(row['Avis'] || '').trim(),
     prio, prioGrp, isF0,
@@ -2170,8 +2232,11 @@ function parseAvisRow(row) {
     ville:      String(row['Ville normalisée'] || ''),
     rue:        (String(row['Nº de rue'] || '') + ' ' + String(row['Rue'] || '')).trim(),
     objet:      String(row["Désignation de l'objet technique"] || ''),
+<<<<<<< HEAD
     ouvrageAvis,
     entiteAvis,
+=======
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
     decl:       String(row["Déclaré par nom d'utilisateur"] || ''),
     dateRef:    debut,
     dateStr:    debut ? debut.toLocaleDateString('fr-FR') : '—',
@@ -2180,15 +2245,22 @@ function parseAvisRow(row) {
     delaiLabel: rule ? rule.delai      : '—',
     traitement: rule ? rule.traitement : 'Vérifier MAINT0910',
     nature:     rule ? rule.nature     : '?',
+<<<<<<< HEAD
     ref:        rule ? rule.ref        : '?',
     ouvrageRef: rule ? rule.ouvrage    : '?',
+=======
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
     otLie:      null,
   };
 }
 
 function linkAvisToOT() {
   if (!ALL_DATA.length) return;
+<<<<<<< HEAD
   FILTERED_AVIS.forEach(a => {
+=======
+  AVIS_DATA.forEach(a => {
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
     if (!a.hasOT) return;
     const found = ALL_DATA.find(d => d.numSAP === a.otNum || d.ordre === a.otNum);
     a.otLie = found ? found.numSAP : null;
@@ -2198,7 +2270,11 @@ function linkAvisToOT() {
 const PRIO_ORD_AVIS = { F0:0, P1:1, P2:2, R1:3, R2:4, R3:5, Autre:6 };
 
 function renderAvis() {
+<<<<<<< HEAD
   if (!FILTERED_AVIS.length) {
+=======
+  if (!AVIS_DATA.length) {
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
     document.getElementById('avis-empty-banner').style.display = '';
     document.getElementById('avis-content').style.display      = 'none';
     return;
@@ -2212,12 +2288,20 @@ function renderAvis() {
 
 function renderAvisKPIs() {
   const total    = AVIS_DATA.length;
+<<<<<<< HEAD
   const f0       = FILTERED_AVIS.filter(a => a.isF0).length;
   const f0SansOT = FILTERED_AVIS.filter(a => a.isF0 && !a.hasOT).length;
   const sansOT   = FILTERED_AVIS.filter(a => !a.hasOT).length;
   const ko       = FILTERED_AVIS.filter(a => a.confCode === 'KO').length;
   const lies     = FILTERED_AVIS.filter(a => a.otLie).length;
   const nonQualif = FILTERED_AVIS.filter(a => a.confCode === '?').length;
+=======
+  const f0       = AVIS_DATA.filter(a => a.isF0).length;
+  const f0SansOT = AVIS_DATA.filter(a => a.isF0 && !a.hasOT).length;
+  const sansOT   = AVIS_DATA.filter(a => !a.hasOT).length;
+  const ko       = AVIS_DATA.filter(a => a.confCode === 'KO').length;
+  const lies     = AVIS_DATA.filter(a => a.otLie).length;
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
 
   document.getElementById('avis-kpi-total').textContent   = total.toLocaleString('de-DE');
   document.getElementById('avis-kpi-f0').textContent      = f0;
@@ -2225,6 +2309,7 @@ function renderAvisKPIs() {
   document.getElementById('avis-kpi-sans-ot').textContent = sansOT;
   document.getElementById('avis-kpi-ko').textContent      = ko;
   document.getElementById('avis-kpi-lies').textContent    = lies;
+<<<<<<< HEAD
   document.getElementById('avis-kpi-nonqualif').textContent = nonQualif;
 
   // ── KPIs BRC spécifiques ──
@@ -2256,11 +2341,17 @@ function renderAvisKPIs() {
   setBrcKpi('brc-p18-total',  'brc-p18-ko',  brcP18.length, brcP18KO);
   setBrcKpi('brc-p-total',    'brc-p-ko',    brcP.length,   brcPKO);
   setBrcKpi('brc-r-total',    'brc-r-ko',    brcR.length,   brcRKO);
+=======
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
 }
 
 function renderAvisCharts() {
   const prioMap  = {};
+<<<<<<< HEAD
   FILTERED_AVIS.forEach(a => prioMap[a.prioGrp] = (prioMap[a.prioGrp]||0)+1);
+=======
+  AVIS_DATA.forEach(a => prioMap[a.prioGrp] = (prioMap[a.prioGrp]||0)+1);
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
   const pOrder   = ['F0','P1','P2','R1','R2','R3','Autre'];
   const pLabels  = { F0:'F0 Fuite', P1:'P1 Prescrit', P2:'P2 Prescrit', R1:'R1 Recom.', R2:'R2 Recom.', R3:'R3 Recom.', Autre:'Autre' };
   const pColors  = { F0:'#7f1d1d', P1:'#b91c1c', P2:'#c95f00', R1:'#1a4faf', R2:'#6d28d9', R3:'#0f766e', Autre:'#94a3b8' };
@@ -2280,7 +2371,11 @@ function renderAvisCharts() {
   const buckets  = ['0–3 mois','3–6 mois','6–12 mois','1–2 ans','> 2 ans'];
   const bucketFn = d => d<=90?'0–3 mois':d<=180?'3–6 mois':d<=365?'6–12 mois':d<=730?'1–2 ans':'> 2 ans';
   const bMap     = {};
+<<<<<<< HEAD
   FILTERED_AVIS.filter(a=>!a.hasOT).forEach(a => { const b=bucketFn(a.ageDays); bMap[b]=(bMap[b]||0)+1; });
+=======
+  AVIS_DATA.filter(a=>!a.hasOT).forEach(a => { const b=bucketFn(a.ageDays); bMap[b]=(bMap[b]||0)+1; });
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
 
   if (CHARTS.avisAge) CHARTS.avisAge.destroy();
   CHARTS.avisAge = new Chart(
@@ -2306,6 +2401,7 @@ function setAvisMode(mode) {
 
 function renderAvisTable() {
   const titles = {
+<<<<<<< HEAD
     'f0':      '🚨 Fuites F0',
     'sans-ot': '⚠️ Anomalies sans OT correctif',
     'ko':      '⛔ Hors délai MAINT0910',
@@ -2336,6 +2432,21 @@ function renderAvisTable() {
     case 'brc-pr':  rows = FILTERED_AVIS.filter(a =>
       (a.ouvrageAvis==='BRC' || a.ouvrageRef==='BRC' || a.ouvrageRef==='BRC/CM')); break;
     default:        rows = [...FILTERED_AVIS];
+=======
+    'f0':     '🚨 Fuites F0',
+    'sans-ot':'⚠️ Avis sans OT correctif',
+    'ko':     '⛔ Hors délai MAINT0910',
+    'lies':   '🔗 Avis liés à un OT chargé',
+    'all':    '📋 Tous les avis',
+  };
+  let rows;
+  switch(AVIS_MODE) {
+    case 'f0':      rows = AVIS_DATA.filter(a => a.isF0);           break;
+    case 'sans-ot': rows = AVIS_DATA.filter(a => !a.hasOT);         break;
+    case 'ko':      rows = AVIS_DATA.filter(a => a.confCode==='KO'); break;
+    case 'lies':    rows = AVIS_DATA.filter(a => a.otLie);           break;
+    default:        rows = [...AVIS_DATA];
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
   }
   rows = [...rows].sort((a,b) =>
     (PRIO_ORD_AVIS[a.prioGrp]??9) - (PRIO_ORD_AVIS[b.prioGrp]??9) || b.ageDays - a.ageDays
@@ -2351,6 +2462,7 @@ function renderAvisTable() {
 }
 
 function exportExcelAvis() {
+<<<<<<< HEAD
   if (!FILTERED_AVIS.length) return;
 
   let filtered;
@@ -2365,14 +2477,30 @@ function exportExcelAvis() {
     case 'brc-pr':   filtered = FILTERED_AVIS.filter(a =>
       (a.ouvrageAvis==='BRC'||a.ouvrageRef==='BRC'||a.ouvrageRef==='BRC/CM')); break;
     default:         filtered = [...FILTERED_AVIS];
+=======
+  if (!AVIS_DATA.length) return;
+
+  // Reproduit le même filtre que renderAvisTable
+  let filtered;
+  switch(AVIS_MODE) {
+    case 'f0':      filtered = AVIS_DATA.filter(a => a.isF0);           break;
+    case 'sans-ot': filtered = AVIS_DATA.filter(a => !a.hasOT);         break;
+    case 'ko':      filtered = AVIS_DATA.filter(a => a.confCode==='KO'); break;
+    case 'lies':    filtered = AVIS_DATA.filter(a => a.otLie);           break;
+    default:        filtered = [...AVIS_DATA];
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
   }
   filtered = [...filtered].sort((a,b) =>
     (PRIO_ORD_AVIS[a.prioGrp]??9) - (PRIO_ORD_AVIS[b.prioGrp]??9) || b.ageDays - a.ageDays
   );
 
   const tabLabels = {
+<<<<<<< HEAD
     'f0':'Fuites_F0', 'sans-ot':'Sans_OT', 'ko':'Hors_Delai',
     'nonqualif':'Non_Qualifiees', 'brc-p18':'BRC_P18mois', 'brc-pr':'BRC_Toutes',
+=======
+    'f0':'Fuites_F0', 'sans-ot':'Sans_OT', 'ko':'Hors_Delai_MAINT0910',
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
     'lies':'Lies_a_OT', 'all':'Tous'
   };
 
@@ -2381,9 +2509,14 @@ function exportExcelAvis() {
     'Priorité':           a.prio,
     'Défaillance':        a.defail,
     'Cause':              a.cause,
+<<<<<<< HEAD
     'Ouvrage détecté':    a.ouvrageAvis || '?',
     'Référentiel':        a.ref || '?',
     'Délai réglementaire':a.delaiLabel,
+=======
+    'Nature MAINT0910':   a.nature,
+    'Délai MAINT0910':    a.delaiLabel,
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
     'Conformité':         a.conformite,
     'Dépassement (j)':    a.depasse > 0 ? a.depasse : '',
     'Traitement prescrit':a.traitement,
@@ -2397,10 +2530,17 @@ function exportExcelAvis() {
 
   const ws  = XLSX.utils.json_to_sheet(rows);
   ws['!autofilter'] = { ref: ws['!ref'] };
+<<<<<<< HEAD
   ws['!cols'] = [{wch:12},{wch:14},{wch:40},{wch:30},{wch:10},{wch:14},{wch:16},{wch:22},
                  {wch:10},{wch:40},{wch:20},{wch:28},{wch:10},{wch:12},{wch:16},{wch:12}];
   const wbX = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wbX, ws, 'Anomalies');
+=======
+  ws['!cols'] = [{wch:12},{wch:14},{wch:40},{wch:30},{wch:8},{wch:14},{wch:22},{wch:10},
+                 {wch:40},{wch:20},{wch:28},{wch:10},{wch:12},{wch:16},{wch:12}];
+  const wbX = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wbX, ws, 'Avis PM');
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
   const label = tabLabels[AVIS_MODE] || 'Avis';
   XLSX.writeFile(wbX, `GRDF_Avis_PM_${label}_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
@@ -2479,6 +2619,7 @@ function matchSearch(row, query) {
 
 // ── Renderers avec recherche ─────────────────────────────────
 
+<<<<<<< HEAD
 // ── Navigation vers un OT depuis un avis ─────────────────────
 function navigateToOT(numSAP) {
   // Chercher dans préventif d'abord, puis correctif
@@ -2514,6 +2655,8 @@ function navigateToOT(numSAP) {
 }
 
 
+=======
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
 function _renderPrevRows(rows, query) {
   const tbody = document.getElementById('table-retard-body');
   tbody.innerHTML = '';
@@ -2523,7 +2666,10 @@ function _renderPrevRows(rows, query) {
 
   visible.forEach(d => {
     const tr = document.createElement('tr');
+<<<<<<< HEAD
     tr.dataset.numsap = d.numSAP;
+=======
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
     const dateStr = d.dateRef ? d.dateRef.toLocaleDateString('fr-FR') : '—';
     const bc = d.statut==='TERM'?'badge-term':d.statut==='TERM ANO'?'badge-ano':
                d.statut==='ACTI'?'badge-acti':d.statut==='EPR'?'badge-epr':'badge-prg';
@@ -2558,7 +2704,10 @@ function _renderCorRows(rows, query) {
 
   visible.forEach(d => {
     const tr = document.createElement('tr');
+<<<<<<< HEAD
     tr.dataset.numsap = d.numSAP;
+=======
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
     const dateStr = d.dateRef ? d.dateRef.toLocaleDateString('fr-FR') : '—';
     const bc = d.statut==='TERM'?'badge-term':d.statut==='TERM ANO'?'badge-ano':
                d.statut==='ACTI'?'badge-acti':d.statut==='EPR'?'badge-epr':'badge-prg';
@@ -2605,8 +2754,13 @@ function _renderAvisRows(rows, query) {
     const ccl = confCls[a.confCode] || 'conf-unk';
     const ageCl = a.ageDays>730?'age-crit':a.ageDays>365?'age-warn':'';
     let otCell;
+<<<<<<< HEAD
     if (a.otLie)      otCell = `<span class="badge-ot-lie" title="Cliquer pour voir cet OT dans le tableau Préventif/Correctif" onclick="navigateToOT('${esc(a.otLie)}')" style="cursor:pointer">${esc(a.otLie)}</span>`;
     else if (a.hasOT) otCell = `<span class="badge-ot-ext" title="OT SAP existant mais absent du fichier chargé">Externe : ${esc(a.otNum.substring(0,18))}</span>`;
+=======
+    if (a.otLie)      otCell = `<span class="badge-ot-lie">${esc(a.otLie)}</span>`;
+    else if (a.hasOT) otCell = `<span class="badge-ot-ext">${esc(a.otNum.substring(0,22))}</span>`;
+>>>>>>> 9d89246e3d0653dfd2a56530a360ccc4a6092742
     else              otCell = `<span class="no-ot">Aucun OT</span>`;
 
     tr.innerHTML =

@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0"/>
   <title>GRDF — Tableau de bord maintenance</title>
   <link rel="icon" type="image/png" href="logo.png"/>
   <link rel="stylesheet" href="style.css"/>
@@ -41,7 +41,7 @@
     <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="loadFile(this)"/>
     <div id="file-avis-drop-zone" onclick="document.getElementById('fileAvisInput').click()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      <span id="drop-avis-label">Avis anomalies PM</span>
+      <span id="drop-avis-label">Anomalies</span>
     </div>
     <input type="file" id="fileAvisInput" accept=".xlsx,.xls" style="display:none" onchange="loadAvisFile(this)"/>
     <div id="file-meta"></div>
@@ -75,7 +75,7 @@
         </button>
         <button class="mode-tab mode-tab-avis" id="tab-avis" onclick="setMode('avis')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          Avis PM
+          Anomalies
           <span class="mode-tab-count mode-tab-count-avis" id="tab-avis-count">—</span>
         </button>
       </div>
@@ -307,79 +307,71 @@
         <div style="background:#fde8e8;border-radius:50%;width:80px;height:80px;display:flex;align-items:center;justify-content:center;color:#b91c1c">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         </div>
-        <h3 style="font-size:18px;color:#1e293b;font-weight:600">Fichier Avis PM non chargé</h3>
-        <p style="font-size:13px;max-width:360px;line-height:1.6">Cliquez sur <strong>Avis anomalies PM</strong> dans l'en-tête pour charger votre extraction SAP des avis d'anomalies.</p>
+        <h3 style="font-size:18px;color:#1e293b;font-weight:600">Fichier Anomalies non chargé</h3>
+        <p style="font-size:13px;max-width:360px;line-height:1.6">Cliquez sur <strong>Anomalies</strong> dans l'en-tête pour charger votre extraction SAP des avis d'anomalies.</p>
         <button onclick="document.getElementById('fileAvisInput').click()" style="display:inline-flex;align-items:center;gap:8px;background:#003189;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Charger le fichier Avis PM
+          Charger le fichier Anomalies
         </button>
       </div>
       <div id="avis-content" style="display:none">
         <section class="kpis">
-          <div class="kpi kpi-blue">  <span class="kpi-value" id="avis-kpi-total">—</span>   <span class="kpi-label">Total avis</span></div>
-          <div class="kpi kpi-red">   <span class="kpi-value" id="avis-kpi-f0">—</span>       <span class="kpi-label">🚨 Fuites F0</span></div>
-          <div class="kpi kpi-red">   <span class="kpi-value" id="avis-kpi-f0-ot">—</span>    <span class="kpi-label">Fuites F0 sans OT</span></div>
-          <div class="kpi kpi-orange"><span class="kpi-value" id="avis-kpi-sans-ot">—</span>  <span class="kpi-label">Sans OT correctif</span></div>
-          <div class="kpi kpi-purple"><span class="kpi-value" id="avis-kpi-ko">—</span>        <span class="kpi-label">Hors délai</span></div>
-          <div class="kpi kpi-gray">  <span class="kpi-value" id="avis-kpi-nonqualif">—</span><span class="kpi-label">? Non qualifiées</span></div>
-          <div class="kpi kpi-green"> <span class="kpi-value" id="avis-kpi-lies">—</span>      <span class="kpi-label">Liés à un OT chargé</span></div>
+          <div class="kpi kpi-blue">  <span class="kpi-value" id="avis-kpi-total">—</span>  <span class="kpi-label">Total avis</span></div>
+          <div class="kpi kpi-red">   <span class="kpi-value" id="avis-kpi-f0">—</span>      <span class="kpi-label">🚨 Fuites F0</span></div>
+          <div class="kpi kpi-red">   <span class="kpi-value" id="avis-kpi-f0-ot">—</span>   <span class="kpi-label">Fuites F0 sans OT</span></div>
+          <div class="kpi kpi-orange"><span class="kpi-value" id="avis-kpi-sans-ot">—</span> <span class="kpi-label">Sans OT correctif</span></div>
+          <div class="kpi kpi-purple"><span class="kpi-value" id="avis-kpi-ko">—</span>       <span class="kpi-label">Hors délai</span></div>
+          <div class="kpi kpi-slate" onclick="setAvisMode('nonqualif')" style="cursor:pointer" title="Voir les anomalies non identifiées dans le référentiel">
+            <span class="kpi-value" id="avis-kpi-nonqualif">—</span>
+            <span class="kpi-label">❓ Non qualifiées</span>
+          </div>
+          <div class="kpi kpi-green"> <span class="kpi-value" id="avis-kpi-lies">—</span>     <span class="kpi-label">Liés à un OT chargé</span></div>
         </section>
-
-        <!-- FOCUS BRC -->
-        <section class="focus-section focus-brc">
-          <div class="focus-label">
-            <span class="focus-icon">🗂</span>
-            <span class="focus-title">FOCUS<br>BRC</span>
-            <span class="focus-ref">SUIVI<br>SVR10</span>
+        <!-- KPIs BRC spécifiques -->
+        <section class="kpis-brc">
+          <div class="kpi-brc-header">🏢 Focus BRC<br><span style="font-size:10px;font-weight:500;opacity:.8">Suivi SVR10</span></div>
+          <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-p18')" style="cursor:pointer">
+            <div class="kpi-brc-label">P-18 mois</div>
+            <div class="kpi-brc-desc">Accès impossibles</div>
+            <div class="kpi-brc-total" id="brc-p18-total">—</div>
+            <div class="kpi-brc-sub" id="brc-p18-ko">—</div>
           </div>
-          <div class="focus-card">
-            <div class="focus-card-title">P-18 MOIS</div>
-            <div class="focus-card-sub">Accès impossibles</div>
-            <div class="focus-card-value" id="kpi-brc-p18">—</div>
-            <div class="focus-card-detail" id="kpi-brc-p18-detail">—</div>
+          <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-p')" style="cursor:pointer">
+            <div class="kpi-brc-label">Prescrit (P)</div>
+            <div class="kpi-brc-desc">P-1 mois · P-3 mois · P-2 ans</div>
+            <div class="kpi-brc-total" id="brc-p-total">—</div>
+            <div class="kpi-brc-sub" id="brc-p-ko">—</div>
           </div>
-          <div class="focus-card">
-            <div class="focus-card-title">PRESCRIT (P)</div>
-            <div class="focus-card-sub">P-1 mois &middot; P-3 mois &middot; P-1 an</div>
-            <div class="focus-card-value" id="kpi-brc-p">—</div>
-            <div class="focus-card-detail" id="kpi-brc-p-detail">—</div>
-          </div>
-          <div class="focus-card">
-            <div class="focus-card-title">RECOMMANDÉ (R)</div>
-            <div class="focus-card-sub">R-1 mois &middot; R-1 an &middot; R-3</div>
-            <div class="focus-card-value" id="kpi-brc-r">—</div>
-            <div class="focus-card-detail" id="kpi-brc-r-detail">—</div>
-          </div>
-        </section>
-
-        <!-- FOCUS ROB -->
-        <section class="focus-section focus-rob">
-          <div class="focus-label">
-            <span class="focus-icon">🔧</span>
-            <span class="focus-title">FOCUS<br>ROB</span>
-            <span class="focus-ref">SUIVI<br>MAINT0410</span>
-          </div>
-          <div class="focus-card">
-            <div class="focus-card-title">NACC</div>
-            <div class="focus-card-sub">Accès impossible robinet</div>
-            <div class="focus-card-value" id="kpi-rob-nacc">—</div>
-            <div class="focus-card-detail" id="kpi-rob-nacc-detail">—</div>
-          </div>
-          <div class="focus-card">
-            <div class="focus-card-title">NMAN</div>
-            <div class="focus-card-sub">Non manœuvrabilité robinet</div>
-            <div class="focus-card-value" id="kpi-rob-nman">—</div>
-            <div class="focus-card-detail" id="kpi-rob-nman-detail">—</div>
-          </div>
-          <div class="focus-card">
-            <div class="focus-card-title">TOUS ROB</div>
-            <div class="focus-card-sub">Toutes anomalies robinets</div>
-            <div class="focus-card-value" id="kpi-rob-all">—</div>
-            <div class="focus-card-detail" id="kpi-rob-all-detail">—</div>
+          <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-r')" style="cursor:pointer">
+            <div class="kpi-brc-label">Recommandé (R)</div>
+            <div class="kpi-brc-desc">R-1 mois · R-2 ans · R-3</div>
+            <div class="kpi-brc-total" id="brc-r-total">—</div>
+            <div class="kpi-brc-sub" id="brc-r-ko">—</div>
           </div>
         </section>
 
-        <section class="charts-row-2">
+        <!-- KPIs ROB spécifiques NACC / NMAN -->
+        <section class="kpis-brc kpis-rob">
+          <div class="kpi-brc-header">🔩 Focus ROB<br><span style="font-size:10px;font-weight:500;opacity:.8">Suivi MAINT0410</span></div>
+          <div class="kpi kpi-brc-card kpi-rob-card" onclick="setAvisMode('rob-nacc')" style="cursor:pointer">
+            <div class="kpi-brc-label">NACC</div>
+            <div class="kpi-brc-desc">Accès impossible robinet</div>
+            <div class="kpi-brc-total" id="rob-nacc-total">—</div>
+            <div class="kpi-brc-sub" id="rob-nacc-ko">—</div>
+          </div>
+          <div class="kpi kpi-brc-card kpi-rob-card" onclick="setAvisMode('rob-nman')" style="cursor:pointer">
+            <div class="kpi-brc-label">NMAN</div>
+            <div class="kpi-brc-desc">Non manœuvrabilité robinet</div>
+            <div class="kpi-brc-total" id="rob-nman-total">—</div>
+            <div class="kpi-brc-sub" id="rob-nman-ko">—</div>
+          </div>
+          <div class="kpi kpi-brc-card kpi-rob-card" onclick="setAvisMode('rob-all')" style="cursor:pointer">
+            <div class="kpi-brc-label">Tous ROB</div>
+            <div class="kpi-brc-desc">Toutes anomalies robinets</div>
+            <div class="kpi-brc-total" id="rob-all-total">—</div>
+            <div class="kpi-brc-sub" id="rob-all-ko">—</div>
+          </div>
+        </section>
           <div class="chart-card">
             <div class="chart-header"><span class="chart-title">Répartition par priorité</span></div>
             <div class="chart-body chart-body-donut"><canvas id="chartAvisPrio"></canvas></div>
@@ -391,20 +383,20 @@
         </section>
         <section class="table-section">
           <div class="table-header">
-            <span class="table-title" id="avis-table-title">Avis anomalies PM</span>
+            <span class="table-title" id="avis-table-title">Anomalies</span>
             <div class="table-actions">
               <div class="tab-group">
-                <button class="tab-btn active" data-avis-mode="f0"         onclick="setAvisMode('f0')">🚨 Fuites F0</button>
-                <button class="tab-btn"        data-avis-mode="sans-ot"    onclick="setAvisMode('sans-ot')">⚠️ Sans OT</button>
-                <button class="tab-btn"        data-avis-mode="ko"         onclick="setAvisMode('ko')">⛔ Hors délai</button>
-                <button class="tab-btn"        data-avis-mode="nonqualif"  onclick="setAvisMode('nonqualif')">? Non qualifiées</button>
-                <button class="tab-btn"        data-avis-mode="brc-p18"    onclick="setAvisMode('brc-p18')">🗂 BRC P-18</button>
-                <button class="tab-btn"        data-avis-mode="brc-p"      onclick="setAvisMode('brc-p')">🗂 BRC Prescrit</button>
-                <button class="tab-btn"        data-avis-mode="brc-r"      onclick="setAvisMode('brc-r')">🗂 BRC Recommandé</button>
-                <button class="tab-btn"        data-avis-mode="rob-nacc"   onclick="setAvisMode('rob-nacc')">🔧 ROB NACC</button>
-                <button class="tab-btn"        data-avis-mode="rob-nman"   onclick="setAvisMode('rob-nman')">🔧 ROB NMAN</button>
-                <button class="tab-btn"        data-avis-mode="lies"       onclick="setAvisMode('lies')">🔗 Liés OT</button>
-                <button class="tab-btn"        data-avis-mode="all"        onclick="setAvisMode('all')">📋 Tous</button>
+                <button class="tab-btn active" data-avis-mode="f0"        onclick="setAvisMode('f0')">🚨 Fuites F0</button>
+                <button class="tab-btn"        data-avis-mode="sans-ot"   onclick="setAvisMode('sans-ot')">⚠️ Sans OT</button>
+                <button class="tab-btn"        data-avis-mode="ko"        onclick="setAvisMode('ko')">⛔ Hors délai</button>
+                <button class="tab-btn"        data-avis-mode="nonqualif" onclick="setAvisMode('nonqualif')">❓ Non qualifiées</button>
+                <button class="tab-btn"        data-avis-mode="brc-p18"   onclick="setAvisMode('brc-p18')">🏢 BRC P-18</button>
+                <button class="tab-btn"        data-avis-mode="brc-p"     onclick="setAvisMode('brc-p')">🏢 BRC Prescrit</button>
+                <button class="tab-btn"        data-avis-mode="brc-r"     onclick="setAvisMode('brc-r')">🏢 BRC Recommandé</button>
+                <button class="tab-btn"        data-avis-mode="rob-nacc"  onclick="setAvisMode('rob-nacc')">🔩 ROB NACC</button>
+                <button class="tab-btn"        data-avis-mode="rob-nman"  onclick="setAvisMode('rob-nman')">🔩 ROB NMAN</button>
+                <button class="tab-btn"        data-avis-mode="lies"      onclick="setAvisMode('lies')">🔗 Liés OT</button>
+                <button class="tab-btn"        data-avis-mode="all"       onclick="setAvisMode('all')">📋 Tous</button>
               </div>
               <button class="btn-excel" onclick="exportExcelAvis()">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
@@ -424,7 +416,7 @@
                 <th class="sortable" onclick="sortTable('avis',this,'avis','str')">N° Avis</th>
                 <th class="sortable" onclick="sortTable('avis',this,'prioGrp','prio')">Priorité</th>
                 <th class="sortable" onclick="sortTable('avis',this,'defail','str')">Défaillance</th>
-                <th class="sortable" onclick="sortTable('avis',this,'delaiLabel','str')">Délai</th>
+                <th class="sortable" onclick="sortTable('avis',this,'delaiLabel','str')">Délai MAINT0910</th>
                 <th class="sortable" onclick="sortTable('avis',this,'confCode','str')">Conformité</th>
                 <th class="sortable" onclick="sortTable('avis',this,'ville','str')">Ville</th>
                 <th class="sortable" onclick="sortTable('avis',this,'rue','str')">Adresse</th>
@@ -446,14 +438,7 @@
   <span id="footer-date"></span>
 </footer>
 
-<script src="js/core/ot-utils.js"></script>
-<script src="js/core/dashboard-helpers.js"></script>
-<script src="js/data/ot-loader.js"></script>
-<script src="js/data/avis-loader.js"></script>
-<script src="js/services/filters.js"></script>
-<script src="js/services/weekly-trends.js"></script>
-<script src="js/features/kpi-plan.js"></script>
-<script src="js/features/render-preventif.js"></script>
 <script src="dashboard.js"></script>
 </body>
 </html>
+

@@ -234,6 +234,20 @@ function getISOWeek(d) {
 }
 
 // ── Chargement fichier ────────────────────────────────────────
+function initFilters() {
+  populateSelect('filter-entite',  [...new Set(ALL_DATA.map(d=>d.entite))].sort());
+  populateSelect('filter-ouvrage', [...new Set(ALL_DATA.map(d=>d.ouvrage))].sort());
+}
+
+function populateSelect(id, values) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = '<option value="">Tous</option>';
+  values.filter(Boolean).forEach(v => {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v; sel.appendChild(o);
+  });
+}
+
 function loadFile(input) {
   const file = input.files[0];
   if (!file) return;
@@ -272,7 +286,7 @@ function loadFile(input) {
       render();
       document.getElementById('empty-state').style.display = 'none';
       document.getElementById('dashboard').style.display   = 'block';
-    } catch(err) { alert('Erreur lecture fichier : ' + err.message); }
+    } catch(err) { console.error('Stack:', err.stack); alert('Erreur lecture fichier : ' + err.message + '\n\n' + err.stack?.split('\n').slice(0,3).join('\n')); }
   };
   reader.readAsArrayBuffer(file);
 }
@@ -374,20 +388,6 @@ function classifyOuvrage(gamme, ordre, travail) {
 }
 
 // ── Filtres ───────────────────────────────────────────────────
-function initFilters() {
-  populateSelect('filter-entite',  [...new Set(ALL_DATA.map(d=>d.entite))].sort());
-  populateSelect('filter-ouvrage', [...new Set(ALL_DATA.map(d=>d.ouvrage))].sort());
-}
-
-function populateSelect(id, values) {
-  const sel = document.getElementById(id);
-  sel.innerHTML = '<option value="">Tous</option>';
-  values.filter(Boolean).forEach(v => {
-    const o = document.createElement('option');
-    o.value = v; o.textContent = v; sel.appendChild(o);
-  });
-}
-
 function applyFilters() {
   const entite  = document.getElementById('filter-entite').value;
   const ouvrage = document.getElementById('filter-ouvrage').value;

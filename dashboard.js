@@ -10,6 +10,14 @@ let CHARTS    = {};
 let TABLE_MODE = 'retard';
 let COR_TABLE_MODE = 'cor-ouverts';
 let CURRENT_MODE = 'preventif'; // 'preventif' | 'correctif'
+// ── Variables globales Avis PM ────────────────────────────────
+let AVIS_DATA = [];
+let AVIS_MODE = 'f0';
+const PRIO_ORD_AVIS  = { F0:0, P1:1, P2:2, R1:3, R2:4, R3:5, Autre:6 };
+const PRIO_ORD_SORT  = { F0:0, P1:1, P2:2, R1:3, R2:4, R3:5, Autre:6 };
+const SORT_STATE     = { prev:{col:null,dir:1}, cor:{col:null,dir:1}, avis:{col:null,dir:1} };
+let ROWS_PREV = [], ROWS_COR = [], ROWS_AVIS = [];
+
 
 const C = {
   blue:'#003189', blueMid:'#1a4faf', blueLight:'#93b4e8',
@@ -1257,8 +1265,8 @@ function getFilterValue(id, fallback='') {
   return el ? (el.value || fallback) : fallback;
 }
 
-document.getElementById('footer-date').textContent =
-  'Tableau de bord généré le ' + new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+const _fd = document.getElementById('footer-date');
+if (_fd) _fd.textContent = 'Tableau de bord généré le ' + new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
 
 // ── Export Excel ──────────────────────────────────────────────
 function exportExcel() {
@@ -1657,9 +1665,6 @@ async function exportPPTX() {
 //  MODULE AVIS PM — Chargement, parsing, rendu, export
 // ════════════════════════════════════════════════════════════════
 
-let AVIS_DATA = [];
-let AVIS_MODE = 'f0';
-
 const MAINT0910_RULES = [
   { keys:['fuite externe','fuite sur ci','fuite clapet','fuite robinet','fuite tuyaut','fuite detend','fuite au niveau'],
     nature:'P', delai:'IMMÉDIAT', jours:0, traitement:'Référentiel classification fuites — ISG immédiat' },
@@ -1954,7 +1959,6 @@ function linkAvisToOT() {
   });
 }
 
-const PRIO_ORD_AVIS = { F0:0, P1:1, P2:2, R1:3, R2:4, R3:5, Autre:6 };
 
 function renderAvis() {
   if (!AVIS_DATA.length) {
@@ -2166,11 +2170,7 @@ function exportExcelAvis() {
 // ════════════════════════════════════════════════════════════════
 
 // État de tri par table
-const SORT_STATE = { prev:{col:null,dir:1}, cor:{col:null,dir:1}, avis:{col:null,dir:1} };
-// Données courantes par table (après filtre onglet, avant tri/recherche)
-let ROWS_PREV = [], ROWS_COR = [], ROWS_AVIS = [];
 
-const PRIO_ORD_SORT = { F0:0, P1:1, P2:2, R1:3, R2:4, R3:5, Autre:6 };
 
 function sortTable(table, th, col, type) {
   const state = SORT_STATE[table];

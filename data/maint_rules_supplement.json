@@ -1,0 +1,1066 @@
+[
+  {
+    "keys": [
+      "acces immeuble impossible"
+    ],
+    "nature": "P",
+    "delai": "P-18 mois",
+    "jours": 548,
+    "traitement": "Procédure Accessibilité annexe 1 SVR",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Accès immeuble impossible",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "acces impossible a la ci"
+    ],
+    "nature": "P",
+    "delai": "P-18 mois",
+    "jours": 548,
+    "traitement": "Procédure Accessibilité",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Accès impossible à la CI",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "acces impossible a la nourrice"
+    ],
+    "nature": "P",
+    "delai": "P-18 mois",
+    "jours": 548,
+    "traitement": "Procédure Accessibilité",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Accès impossible à la Nourrice",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "acces impossible au robinet 13.2"
+    ],
+    "nature": "P",
+    "delai": "P-18 mois",
+    "jours": 548,
+    "traitement": "Procédure Accessibilité",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Accès impossible au robinet 13.2",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "acces impossible conduite montante"
+    ],
+    "nature": "P",
+    "delai": "P-18 mois",
+    "jours": 548,
+    "traitement": "Procédure Accessibilité + info syndic",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Accès impossible Conduite Montante",
+    "_freq": 21
+  },
+  {
+    "keys": [
+      "acces impossible equipements du poste"
+    ],
+    "nature": "P",
+    "delai": "P-18 mois",
+    "jours": 548,
+    "traitement": "Procédure Accessibilité",
+    "ouvrages": [
+      "PDR"
+    ],
+    "_source": "Accès impossible équipements du poste",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "acces installation impossible"
+    ],
+    "nature": "P",
+    "delai": "P-18 mois",
+    "jours": 548,
+    "traitement": "Procédure Accessibilité",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Accès installation impossible",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "acces robinet impossible"
+    ],
+    "nature": "P",
+    "delai": "P-1 mois",
+    "jours": 30,
+    "traitement": "MAINT0410 — statut NACC GMAO + consigne Carpathe",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Accès Robinet impossible",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "acces robinet rdd impossible"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0410 — info CE + traitement lors de la GM si possible",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Accès robinet RDD impossible",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "abs prot.meca. (pb/cuivre/acier leger)"
+    ],
+    "nature": "R",
+    "delai": "R-3",
+    "jours": null,
+    "traitement": "MAINT0520 / SVR10 CI — protection mécanique inexistante ou insuffisante",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Abs prot.méca. (pb/cuivre/acier léger)",
+    "_freq": 48
+  },
+  {
+    "keys": [
+      "abs.plaque consigne/mauvaise lisibilite"
+    ],
+    "nature": "P",
+    "delai": "P-2 ans",
+    "jours": 730,
+    "traitement": "Remise au propriétaire (CM > 400 mbar ou > 10 logements)",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Abs.plaque consigne/mauvaise lisibilité",
+    "_freq": 16
+  },
+  {
+    "keys": [
+      "abs.plaque repere rob/mauvai.lisibilite"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 p.31 — traitement lors de la GM (MCO=Oui)",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Abs.plaque repère rob/mauvai.lisibilité",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "absence de cle de coffret c"
+    ],
+    "nature": "P",
+    "delai": "P-2 ans",
+    "jours": 730,
+    "traitement": "Remise au propriétaire",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Absence de clé de coffret C",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "absence de cle de manoeuvre f"
+    ],
+    "nature": "P",
+    "delai": "P-2 ans",
+    "jours": 730,
+    "traitement": "Remise au propriétaire",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Absence de clé de manoeuvre F",
+    "_freq": 3
+  },
+  {
+    "keys": [
+      "absence de reperage (si plusieurs cm)"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "Traitement lors de la GM",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Absence de repérage (si plusieurs CM)",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "absence de tampon ou trappe"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "MAINT0410 — balisage immédiat + remplacement programmé",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Absence de tampon ou trappe",
+    "_freq": 9
+  },
+  {
+    "keys": [
+      "absence de ventilation galerie technique"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0520 — réparation/création bouche de ventilation",
+    "ouvrages": [
+      "SIN"
+    ],
+    "_source": "Absence de ventilation galerie technique",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "branchement improductif non obture"
+    ],
+    "nature": "P",
+    "delai": "P-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 p.59 — macaron + bouchon + condamnation OCI (MCO=Oui)",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Branchement improductif non obturé",
+    "_freq": 4
+  },
+  {
+    "keys": [
+      "butee cassee ou introuvable"
+    ],
+    "nature": "P",
+    "delai": "P-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0410 — statut NMAN GMAO + procédure déblocage + échange BERG",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Butée cassée ou introuvable",
+    "_freq": 4
+  },
+  {
+    "keys": [
+      "cdg detendeur non-normalise"
+    ],
+    "nature": "P",
+    "delai": "P-3 mois",
+    "jours": 90,
+    "traitement": "SVR10 p.40/57/62 — détendeur dans lot de rappel — remplacement immédiat si possible",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "CDG détendeur non-normalisé",
+    "_freq": 6
+  },
+  {
+    "keys": [
+      "chambre de vanne deteriore / fissure"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "MAINT0410 p.7 — photos + info hiérarchique + programmation",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Chambre de vanne détérioré / fissuré",
+    "_freq": 11
+  },
+  {
+    "keys": [
+      "coffret casse/endommage"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.31 — info hiérarchique + programmation",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Coffret cassé/endommagé",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "connexion event absente, endommagee"
+    ],
+    "nature": "P",
+    "delai": "P-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.40/57/62 — TDR raccordement évent extérieur erroné",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Connexion évent absente, endommagée",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "corrosion superficielle canalisation"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0520 — débriefing + photos + analyse technique",
+    "ouvrages": [
+      "SIN"
+    ],
+    "_source": "Corrosion superficielle canalisation",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "defaut transmission d'etat (mecanique)"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0410 p.7 — info CE + analyse MSG",
+    "ouvrages": [
+      "PDL"
+    ],
+    "_source": "Défaut transmission d'état (mécanique)",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "detendeur vetuste (hors dgi)"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.40/57 — débriefing + photos + analyse technique",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Détendeur vétuste (hors DGI)",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "deterioration de l'armoire"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.31 — info hiérarchique + programmation",
+    "ouvrages": [
+      "PDL"
+    ],
+    "_source": "Détérioration de l'armoire",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "difficilement manoeuvrable"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0410 — analyse BEX sous 7 jours + réparation sous 3 mois",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Difficilement manoeuvrable",
+    "_freq": 23
+  },
+  {
+    "keys": [
+      "doute sur presence de fonte grise"
+    ],
+    "nature": "P",
+    "delai": "IMMÉDIAT",
+    "jours": 0,
+    "traitement": "SVR10 p.48/53 — info hiérarchique immédiate — processus fonte grise",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Doute sur présence de fonte grise",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "enrouillement bride/manchon"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0520 — démontage + mesure épaisseur + réfection",
+    "ouvrages": [
+      "SIN"
+    ],
+    "_source": "Enrouillement bride/manchon",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "etat rob (o/f) nonconf / se"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "MAINT0410 p.7 — contact CE immédiat + décision CE",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Etat ROB (O/F) NonConf / SE",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "fermeture intempestive"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0410 — RDD — traçabilité pour programmation correctif",
+    "ouvrages": [
+      "PDL"
+    ],
+    "_source": "Fermeture intempestive",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "mauvais traitement de l'information"
+    ],
+    "nature": "INFO",
+    "delai": "N/A",
+    "jours": null,
+    "traitement": "—",
+    "ouvrages": [
+      "PDL"
+    ],
+    "_source": "Mauvais traitement de l'information",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "mesure compensatoire endommagee"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0520 catégorie H — inspection expert + actions correctives",
+    "ouvrages": [
+      "PDL"
+    ],
+    "_source": "Mesure compensatoire endommagée",
+    "_freq": 7
+  },
+  {
+    "keys": [
+      "non etancheite a la fermeture"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0410 p.8 (RDD) — traçabilité pour programmation correctif",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Non étanchéité à la fermeture",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "non etancheite interne"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0410 p.7 — info CE + analyse BEX/GROP/BERG",
+    "ouvrages": [
+      "PDL"
+    ],
+    "_source": "Non étanchéité interne",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "non etancheite interne (incidt ou autre)"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0410 p.7 — info CE + analyse BEX/GROP/BERG",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Non étanchéité interne (incidt ou autre)",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "non etancheite interne regulateur"
+    ],
+    "nature": "P",
+    "delai": "P-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 p.40/57/62 — processus régulateur (HP GRDF)",
+    "ouvrages": [
+      "PDL"
+    ],
+    "_source": "Non étanchéité interne régulateur",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "non manoeuvrabilite"
+    ],
+    "nature": "P",
+    "delai": "P-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0410 — statut NMAN GMAO + procédure déblocage + échange BERG",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Non manoeuvrabilité",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "non manoeuvrabilite de l'ocg"
+    ],
+    "nature": "P",
+    "delai": "P-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.34 — fiche manœuvre SP obligatoire (HP GRDF)",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Non manoeuvrabilité de l'OCG",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "ocg absent ou non visible"
+    ],
+    "nature": "P",
+    "delai": "P-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.31 — absence robinet ou non visibilité regard/coffret",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "OCG absent ou non visible",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "ocg non accessible"
+    ],
+    "nature": "P",
+    "delai": "P-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 p.30 — regard visible, robinet non accessible",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "OCG non accessible",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "objets accroches a la tuyauterie"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0520 — remplacement/pose support + nouvel isolant",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Objets accrochés à la tuyauterie",
+    "_freq": 9
+  },
+  {
+    "keys": [
+      "objets deposes dans la gaine"
+    ],
+    "nature": "R",
+    "delai": "R-3",
+    "jours": null,
+    "traitement": "Signalement syndic/gardien — levée obstacle lors de la prochaine intervention",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Objets déposés dans la gaine",
+    "_freq": 116
+  },
+  {
+    "keys": [
+      "penetration ci non etanche"
+    ],
+    "nature": "P",
+    "delai": "P-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 p.49 — mastic SNFJ (MCO=Oui)",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Pénétration CI non étanche",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "plaque d'identif. absente"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "MAINT0410 — remplacement immédiat lors de la GM (MCO=Oui)",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Plaque d'identif. absente",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "plaque d'identif. erronee"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "MAINT0410 — modification/suppression plaques (MCO=Oui)",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Plaque d'identif. erronée",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "plaque d'identification erronee"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "MAINT0410 — modification/suppression plaques (MCO=Oui)",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Plaque d'identification erronée",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "plaque de reperage absente"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 p.31 / MAINT0410 — traitement lors de la GM (MCO=Oui)",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Plaque de repérage absente",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "plaque de reperage erronee"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "Traitement lors de la GM",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Plaque de repérage erronée",
+    "_freq": 14
+  },
+  {
+    "keys": [
+      "pression regulee incorrecte"
+    ],
+    "nature": "P",
+    "delai": "P-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 p.40/57/62 — processus régulateur (HP GRDF)",
+    "ouvrages": [
+      "PDL"
+    ],
+    "_source": "Pression Régulée Incorrecte",
+    "_freq": 3
+  },
+  {
+    "keys": [
+      "probleme fermeture/ouverture de coffret"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.31 — info hiérarchique + programmation",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Problème fermeture/ouverture de coffret",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "probleme fermeture/ouverture de la gaine"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "Difficulté accès gaine technique — info syndic + programmation",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Problème fermeture/ouverture de la gaine",
+    "_freq": 33
+  },
+  {
+    "keys": [
+      "protec meca insuf/inexist/tres mauv etat"
+    ],
+    "nature": "P",
+    "delai": "P-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 CI — protection mécanique inexistante/insuffisante",
+    "ouvrages": [
+      "SIN"
+    ],
+    "_source": "Protec méca insuf/inexist/très mauv état",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "protection mecanique deterioree"
+    ],
+    "nature": "R",
+    "delai": "R-3",
+    "jours": null,
+    "traitement": "SVR10 p.50 / MAINT0520 — réfection protection mécanique",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Protection mécanique détériorée",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "reperage manquant pour certains br.part."
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.55 — triple concordance lors de la maintenance",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Repèrage manquant pour certains br.part.",
+    "_freq": 4
+  },
+  {
+    "keys": [
+      "tampon ou trappe deteriore"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "MAINT0410 p.7 — photos + info hiérarchique + programmation",
+    "ouvrages": [
+      "ROB"
+    ],
+    "_source": "Tampon ou trappe détérioré",
+    "_freq": 7
+  },
+  {
+    "keys": [
+      "tdr - adresse introuvable"
+    ],
+    "nature": "R",
+    "delai": "N/A",
+    "jours": null,
+    "traitement": "—",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR - Adresse introuvable",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr regulateur a changer"
+    ],
+    "nature": "P",
+    "delai": "P-3 mois",
+    "jours": 90,
+    "traitement": "SVR10 — détendeur dans lot de rappel — remplacement immédiat si possible (HP GRDF)",
+    "ouvrages": [
+      "PDL"
+    ],
+    "_source": "TDR régulateur à changer",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-annee du regulateur erronee"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 — correction données TDR lors de la GM",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-Année du régulateur erronée",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-cb errone ou absent plaque"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 — correction données TDR lors de la GM",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-CB erroné ou absent plaque",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-emplacement regulateur errone"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 — correction données TDR lors de la GM",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-Emplacement régulateur erroné",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-etancheite de la penetration errone"
+    ],
+    "nature": "P",
+    "delai": "P-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 p.49 — mastic SNFJ (MCO=Oui)",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-Etanchéité de la pénétration erroné",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-marque du regulateur erronee"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 — correction données TDR lors de la GM",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-Marque du régulateur erronée",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-photo emplacem regul inexploitable"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 — reprendre photo lors de la prochaine visite",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-Photo emplacem régul inexploitable",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-photo num serie regul inexploitable"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 — reprendre photo lors de la prochaine visite",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-Photo Num série régul inexploitable",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-photo type du regul inexploitable"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 — reprendre photo lors de la prochaine visite",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-Photo Type du régul inexploitable",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-raccordement event exterieur errone"
+    ],
+    "nature": "P",
+    "delai": "P-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.40/57/62 — raccordement lors de la maintenance si possible",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-Raccordement évent extérieur erroné",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-type de branchement errone"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 — correction données TDR lors de la GM",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-Type de branchement erroné",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-type de brancht controle impossible"
+    ],
+    "nature": "P",
+    "delai": "P-18 mois",
+    "jours": 548,
+    "traitement": "SVR10 — procédure Accessibilité",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-Type de brancht contrôle impossible",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tdr-type du regulateur errone"
+    ],
+    "nature": "R",
+    "delai": "R-1 mois",
+    "jours": 30,
+    "traitement": "SVR10 — correction données TDR lors de la GM",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "TDR-Type du régulateur erroné",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "tuy. vetuste/corrodee/chocs (sans dgi)"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.48/53 — débriefing + photos + analyse technique",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Tuy. vétuste/corrodée/chocs (sans DGI)",
+    "_freq": 2
+  },
+  {
+    "keys": [
+      "verre dormant absent ou deteriore"
+    ],
+    "nature": "P",
+    "delai": "P-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.43 — remise propriétaire",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Verre dormant absent ou détérioré",
+    "_freq": 0
+  },
+  {
+    "keys": [
+      "vetuste (hors dgi)"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "SVR10 p.31/57 — débriefing + photos + analyse technique",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Vétusté (hors DGI)",
+    "_freq": 2
+  },
+  {
+    "keys": [
+      "zone de transition en mauvais etat"
+    ],
+    "nature": "R",
+    "delai": "R-2 ans",
+    "jours": 730,
+    "traitement": "MAINT0520 p.7 — recherche corrosion + réfection revêtement",
+    "ouvrages": [
+      "SIN"
+    ],
+    "_source": "Zone de transition en mauvais état",
+    "_freq": 1
+  },
+  {
+    "keys": [
+      "pb d'acces aux equipements(rob/conduite)"
+    ],
+    "nature": "P",
+    "delai": "P-18 mois",
+    "jours": 548,
+    "traitement": "Procédure Accessibilité",
+    "ouvrages": [
+      "BRC"
+    ],
+    "_source": "Pb d'accès aux équipements(rob/conduite)",
+    "_freq": 13
+  }
+]

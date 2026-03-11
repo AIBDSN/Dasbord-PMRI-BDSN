@@ -317,8 +317,6 @@
       <div id="avis-content" style="display:none">
         <section class="kpis">
           <div class="kpi kpi-blue">  <span class="kpi-value" id="avis-kpi-total">—</span>  <span class="kpi-label">Total avis</span></div>
-          <div class="kpi kpi-red">   <span class="kpi-value" id="avis-kpi-f0">—</span>      <span class="kpi-label">🚨 Fuites F0</span></div>
-          <div class="kpi kpi-red">   <span class="kpi-value" id="avis-kpi-f0-ot">—</span>   <span class="kpi-label">Fuites F0 sans OT</span></div>
           <div class="kpi kpi-orange"><span class="kpi-value" id="avis-kpi-sans-ot">—</span> <span class="kpi-label">Sans OT correctif</span></div>
           <div class="kpi kpi-purple"><span class="kpi-value" id="avis-kpi-ko">—</span>       <span class="kpi-label">Hors délai</span></div>
           <div class="kpi kpi-slate" onclick="setAvisMode('nonqualif')" style="cursor:pointer" title="Voir les anomalies non identifiées dans le référentiel">
@@ -327,51 +325,54 @@
           </div>
           <div class="kpi kpi-green"> <span class="kpi-value" id="avis-kpi-lies">—</span>     <span class="kpi-label">Liés à un OT chargé</span></div>
         </section>
-        <!-- KPIs BRC spécifiques -->
-        <section class="kpis-brc">
-          <div class="kpi-brc-header">🏢 Focus BRC<br><span style="font-size:10px;font-weight:500;opacity:.8">Suivi SVR10</span></div>
-          <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-p18')" style="cursor:pointer">
-            <div class="kpi-brc-label">P-18 mois</div>
-            <div class="kpi-brc-desc">Accès impossibles</div>
-            <div class="kpi-brc-total" id="brc-p18-total">—</div>
-            <div class="kpi-brc-sub" id="brc-p18-ko">—</div>
-          </div>
-          <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-p')" style="cursor:pointer">
-            <div class="kpi-brc-label">Prescrit (P)</div>
-            <div class="kpi-brc-desc">P-1 mois · P-3 mois · P-2 ans</div>
-            <div class="kpi-brc-total" id="brc-p-total">—</div>
-            <div class="kpi-brc-sub" id="brc-p-ko">—</div>
-          </div>
-          <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-r')" style="cursor:pointer">
-            <div class="kpi-brc-label">Recommandé (R)</div>
-            <div class="kpi-brc-desc">R-1 mois · R-2 ans · R-3</div>
-            <div class="kpi-brc-total" id="brc-r-total">—</div>
-            <div class="kpi-brc-sub" id="brc-r-ko">—</div>
-          </div>
-        </section>
+        <section class="avis-focus-row">
+          <!-- KPIs BRC spécifiques -->
+          <section class="kpis-brc avis-focus-block">
+            <div class="kpi-brc-header">🏢 Focus BRC</div>
+            <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-p18')" style="cursor:pointer">
+              <div class="kpi-brc-label">P-18 mois</div>
+              <div class="kpi-brc-desc">Accès impossibles</div>
+              <div class="kpi-brc-total" id="brc-p18-total">—</div>
+              <div class="kpi-brc-sub" id="brc-p18-ko">—</div>
+            </div>
+            <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-p')" style="cursor:pointer">
+              <div class="kpi-brc-label">Prescrit (P)</div>
+              <div class="kpi-brc-desc">P-1 mois · P-3 mois · P-2 ans</div>
+              <div class="kpi-brc-total" id="brc-p-total">—</div>
+              <div class="kpi-brc-sub" id="brc-p-ko">—</div>
+            </div>
+            <div class="kpi kpi-brc-card" onclick="setAvisMode('brc-r')" style="cursor:pointer">
+              <div class="kpi-brc-label">Recommandé (R)</div>
+              <div class="kpi-brc-desc">R-1 mois · R-2 ans · R-3</div>
+              <div class="kpi-brc-total" id="brc-r-total">—</div>
+              <div class="kpi-brc-sub" id="brc-r-ko">—</div>
+            </div>
+          </section>
 
-        <!-- KPIs ROB spécifiques NACC / NMAN -->
-        <section class="kpis-brc kpis-rob">
-          <div class="kpi-brc-header">🔩 Focus ROB<br><span style="font-size:10px;font-weight:500;opacity:.8">Suivi MAINT0410</span></div>
-          <div class="kpi kpi-brc-card kpi-rob-card" onclick="setAvisMode('rob-nacc')" style="cursor:pointer">
-            <div class="kpi-brc-label">NACC</div>
-            <div class="kpi-brc-desc">Accès impossible robinet</div>
-            <div class="kpi-brc-total" id="rob-nacc-total">—</div>
-            <div class="kpi-brc-sub" id="rob-nacc-ko">—</div>
-          </div>
-          <div class="kpi kpi-brc-card kpi-rob-card" onclick="setAvisMode('rob-nman')" style="cursor:pointer">
-            <div class="kpi-brc-label">NMAN</div>
-            <div class="kpi-brc-desc">Non manœuvrabilité robinet</div>
-            <div class="kpi-brc-total" id="rob-nman-total">—</div>
-            <div class="kpi-brc-sub" id="rob-nman-ko">—</div>
-          </div>
-          <div class="kpi kpi-brc-card kpi-rob-card" onclick="setAvisMode('rob-all')" style="cursor:pointer">
-            <div class="kpi-brc-label">Tous ROB</div>
-            <div class="kpi-brc-desc">Toutes anomalies robinets</div>
-            <div class="kpi-brc-total" id="rob-all-total">—</div>
-            <div class="kpi-brc-sub" id="rob-all-ko">—</div>
-          </div>
+          <!-- KPIs ROB spécifiques NACC / NMAN -->
+          <section class="kpis-brc kpis-rob avis-focus-block">
+            <div class="kpi-brc-header">🔩 Focus ROB</div>
+            <div class="kpi kpi-brc-card kpi-rob-card" onclick="setAvisMode('rob-nacc')" style="cursor:pointer">
+              <div class="kpi-brc-label">NACC</div>
+              <div class="kpi-brc-desc">Accès impossible robinet</div>
+              <div class="kpi-brc-total" id="rob-nacc-total">—</div>
+              <div class="kpi-brc-sub" id="rob-nacc-ko">—</div>
+            </div>
+            <div class="kpi kpi-brc-card kpi-rob-card" onclick="setAvisMode('rob-nman')" style="cursor:pointer">
+              <div class="kpi-brc-label">NMAN</div>
+              <div class="kpi-brc-desc">Non manœuvrabilité robinet</div>
+              <div class="kpi-brc-total" id="rob-nman-total">—</div>
+              <div class="kpi-brc-sub" id="rob-nman-ko">—</div>
+            </div>
+            <div class="kpi kpi-brc-card kpi-rob-card" onclick="setAvisMode('rob-all')" style="cursor:pointer">
+              <div class="kpi-brc-label">Tous ROB</div>
+              <div class="kpi-brc-desc">Toutes anomalies robinets</div>
+              <div class="kpi-brc-total" id="rob-all-total">—</div>
+              <div class="kpi-brc-sub" id="rob-all-ko">—</div>
+            </div>
+          </section>
         </section>
+        <section class="charts-row-2 avis-charts-row">
           <div class="chart-card">
             <div class="chart-header"><span class="chart-title">Répartition par priorité</span></div>
             <div class="chart-body chart-body-donut"><canvas id="chartAvisPrio"></canvas></div>
@@ -381,23 +382,64 @@
             <div class="chart-body chart-body-bar"><canvas id="chartAvisAge"></canvas></div>
           </div>
         </section>
+
+        <section class="chart-card" id="avis-filters-panel">
+          <div class="chart-header"><span class="chart-title">Filtres anomalies combinables (ET entre groupes, OU dans un groupe)</span></div>
+          <div style="padding:0 16px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px 16px">
+            <div class="filter-inline-group">
+              <label>Ouvrage</label>
+              <select id="avis-filter-ouvrage" onchange="onAvisFilterChange()">
+                <option value="">Tous</option>
+                <option value="BRC">BRC</option>
+                <option value="ROB">ROB</option>
+              </select>
+            </div>
+            <div>
+              <div style="font-size:12px;color:#475569;margin-bottom:6px;font-weight:600">Priorité (multi)</div>
+              <div id="avis-filter-priority-group" style="display:flex;flex-wrap:wrap;gap:8px 12px">
+                <label><input type="checkbox" class="avis-filter-priority" value="P1" onchange="onAvisFilterChange()"/> P1</label>
+                <label><input type="checkbox" class="avis-filter-priority" value="P2" onchange="onAvisFilterChange()"/> P2</label>
+                <label><input type="checkbox" class="avis-filter-priority" value="R1" onchange="onAvisFilterChange()"/> R1</label>
+                <label><input type="checkbox" class="avis-filter-priority" value="R2" onchange="onAvisFilterChange()"/> R2</label>
+                <label><input type="checkbox" class="avis-filter-priority" value="R3" onchange="onAvisFilterChange()"/> R3</label>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:#475569;margin-bottom:6px;font-weight:600">Délai (multi)</div>
+              <div id="avis-filter-delay-group" style="display:flex;flex-wrap:wrap;gap:8px 12px">
+                <label><input type="checkbox" class="avis-filter-delay" value="1m" onchange="onAvisFilterChange()"/> 1 mois</label>
+                <label><input type="checkbox" class="avis-filter-delay" value="18m" onchange="onAvisFilterChange()"/> 18 mois</label>
+                <label><input type="checkbox" class="avis-filter-delay" value="2y" onchange="onAvisFilterChange()"/> 2 ans</label>
+                <label><input type="checkbox" class="avis-filter-delay" value="none" onchange="onAvisFilterChange()"/> Sans délai</label>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:#475569;margin-bottom:6px;font-weight:600">Type d'anomalie (multi)</div>
+              <div id="avis-filter-type-group" style="display:flex;flex-wrap:wrap;gap:8px 12px">
+                <label><input type="checkbox" class="avis-filter-type" value="nacc" onchange="onAvisFilterChange()"/> NACC</label>
+                <label><input type="checkbox" class="avis-filter-type" value="nman" onchange="onAvisFilterChange()"/> NMAN</label>
+                <span id="avis-filter-type-dynamic" style="display:flex;flex-wrap:wrap;gap:8px 12px"></span>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:#475569;margin-bottom:6px;font-weight:600">Statut / traitement (multi)</div>
+              <div id="avis-filter-treatment-group" style="display:flex;flex-wrap:wrap;gap:8px 12px">
+                <label><input type="checkbox" class="avis-filter-treatment" value="with-ot" onchange="onAvisFilterChange()"/> Avec OT</label>
+                <label><input type="checkbox" class="avis-filter-treatment" value="without-ot" onchange="onAvisFilterChange()"/> Sans OT</label>
+                <label><input type="checkbox" class="avis-filter-treatment" value="overdue" onchange="onAvisFilterChange()"/> Hors délai</label>
+                <label><input type="checkbox" class="avis-filter-treatment" value="on-time" onchange="onAvisFilterChange()"/> Dans les délais</label>
+                <label><input type="checkbox" class="avis-filter-treatment" value="nonqualif" onchange="onAvisFilterChange()"/> Non qualifiées</label>
+              </div>
+            </div>
+          </div>
+          <div style="padding:0 16px 14px;display:flex;gap:10px;align-items:center;justify-content:flex-end">
+            <button class="btn-reset-sm" onclick="resetAvisFilters()" title="Réinitialiser les filtres anomalies">↺ Réinitialiser les filtres</button>
+          </div>
+        </section>
         <section class="table-section">
           <div class="table-header">
             <span class="table-title" id="avis-table-title">Anomalies</span>
             <div class="table-actions">
-              <div class="tab-group">
-                <button class="tab-btn active" data-avis-mode="f0"        onclick="setAvisMode('f0')">🚨 Fuites F0</button>
-                <button class="tab-btn"        data-avis-mode="sans-ot"   onclick="setAvisMode('sans-ot')">⚠️ Sans OT</button>
-                <button class="tab-btn"        data-avis-mode="ko"        onclick="setAvisMode('ko')">⛔ Hors délai</button>
-                <button class="tab-btn"        data-avis-mode="nonqualif" onclick="setAvisMode('nonqualif')">❓ Non qualifiées</button>
-                <button class="tab-btn"        data-avis-mode="brc-p18"   onclick="setAvisMode('brc-p18')">🏢 BRC P-18</button>
-                <button class="tab-btn"        data-avis-mode="brc-p"     onclick="setAvisMode('brc-p')">🏢 BRC Prescrit</button>
-                <button class="tab-btn"        data-avis-mode="brc-r"     onclick="setAvisMode('brc-r')">🏢 BRC Recommandé</button>
-                <button class="tab-btn"        data-avis-mode="rob-nacc"  onclick="setAvisMode('rob-nacc')">🔩 ROB NACC</button>
-                <button class="tab-btn"        data-avis-mode="rob-nman"  onclick="setAvisMode('rob-nman')">🔩 ROB NMAN</button>
-                <button class="tab-btn"        data-avis-mode="lies"      onclick="setAvisMode('lies')">🔗 Liés OT</button>
-                <button class="tab-btn"        data-avis-mode="all"       onclick="setAvisMode('all')">📋 Tous</button>
-              </div>
               <button class="btn-excel" onclick="exportExcelAvis()">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
                 Exporter Excel
@@ -416,7 +458,7 @@
                 <th class="sortable" onclick="sortTable('avis',this,'avis','str')">N° Avis</th>
                 <th class="sortable" onclick="sortTable('avis',this,'prioGrp','prio')">Priorité</th>
                 <th class="sortable" onclick="sortTable('avis',this,'defail','str')">Défaillance</th>
-                <th class="sortable" onclick="sortTable('avis',this,'delaiLabel','str')">Délai MAINT0910</th>
+                <th class="sortable" onclick="sortTable('avis',this,'delaiLabel','str')">Délai</th>
                 <th class="sortable" onclick="sortTable('avis',this,'confCode','str')">Conformité</th>
                 <th class="sortable" onclick="sortTable('avis',this,'ville','str')">Ville</th>
                 <th class="sortable" onclick="sortTable('avis',this,'rue','str')">Adresse</th>

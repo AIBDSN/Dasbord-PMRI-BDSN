@@ -444,12 +444,12 @@ function applyFilters() {
 function applyAvisFilter() {
   const entite  = document.getElementById('filter-entite').value;
   const ouvrage = document.getElementById('filter-ouvrage').value;
-  FILTERED_AVIS = AVIS_DATA.filter(a =>
+  FILTERED_AVIS_BASE = AVIS_DATA.filter(a =>
     (!entite  || a.entiteAvis === entite) &&
     (!ouvrage || a.ouvrageAvis === ouvrage ||
                  (ouvrage === 'BRC' && (a.ouvrageRef === 'BRC/CM' || a.ouvrageRef === 'BRC')))
   );
-  if (CURRENT_MODE === 'avis') renderAvis();
+  applyAvisComposedFilters();
 }
 
 function resetFilters() {
@@ -457,9 +457,19 @@ function resetFilters() {
   FILTERED_PREV = ALL_DATA.filter(d => d.nature === 'Préventif' || d.nature === 'Exploitation');
   FILTERED_COR  = ALL_DATA.filter(d => d.nature === 'Correctif');
   FILTERED = CURRENT_MODE === 'correctif' ? FILTERED_COR : FILTERED_PREV;
-  FILTERED_AVIS = [...AVIS_DATA];
-  if (CURRENT_MODE === 'avis') renderAvis();
-  else render();
+  AVIS_MODE = 'all';
+  Object.assign(AVIS_FILTER_STATE, {
+    ouvrage: '',
+    priorities: [],
+    delays: [],
+    types: [],
+    treatments: [],
+  });
+  updateAvisPresetButtons();
+  syncAvisFilterControls();
+  FILTERED_AVIS_BASE = [...AVIS_DATA];
+  applyAvisComposedFilters();
+  if (CURRENT_MODE !== 'avis') render();
 }
 
 // ── Navigation entre modes ────────────────────────────────────
@@ -471,7 +481,12 @@ function setMode(mode) {
   document.getElementById('view-preventif').style.display = mode === 'preventif' ? '' : 'none';
   document.getElementById('view-correctif').style.display = mode === 'correctif' ? '' : 'none';
   document.getElementById('view-avis').style.display      = mode === 'avis'      ? '' : 'none';
-  if (mode === 'avis') { renderAvis(); return; }
+  if (mode === 'avis') {
+    updateAvisPresetButtons();
+    syncAvisFilterControls();
+    renderAvis();
+    return;
+  }
   FILTERED = mode === 'correctif' ? FILTERED_COR : FILTERED_PREV;
   render();
 }
@@ -1714,11 +1729,31 @@ async function exportPPTX() {
 // ════════════════════════════════════════════════════════════════
 
 let AVIS_DATA = [];
-let AVIS_MODE = 'f0';
+let AVIS_MODE = 'all';
+let FILTERED_AVIS_BASE = [];
+const AVIS_FILTER_STATE = {
+  ouvrage: '',
+  priorities: [],
+  delays: [],
+  types: [],
+  treatments: [],
+};
 
 // ── Référentiel complet des anomalies : SVR10 (CI/CM/BRC) + MAINT0410 (ROB/RDD) + MAINT0520 (SIN) ──
 // Chaque règle : keys (mots-clés défaillance), ref (document source), ouvrage (famille), nature (P/R/INFO),
 // delai (libellé), jours (délai en jours, null = non fixé), traitement (action préconisée)
+
+function normalizeDefaillance(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\u0153/g, 'oe').replace(/\u00e6/g, 'ae')
+    .replace(/[’`´]/g, "'")
+    .replace(/[()]/g, ' ')
+    .replace(/[\/\\.,;:_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 const MAINT0910_RULES = [
 
@@ -1750,7 +1785,7 @@ const MAINT0910_RULES = [
     ref:'SVR10', ouvrage:'BRC',
     nature:'P', delai:'P-2 ans', jours:730,
     traitement:'Info immédiate CE + mesures conservatoires + photos + programmation travaux' },
-  { keys:['non manœuvrabilité ocg','non manœuvrabilité de l\'ocg'],
+  { keys:['non manœuvrabilité ocg','non manœuvrabilité de l\'ocg','non manoeuvrabilite de l\'ocg'],
     ref:'SVR10', ouvrage:'BRC',
     nature:'P', delai:'P-2 ans', jours:730,
     traitement:'Info hiérarchique + info gestionnaire + démarche autorisation — saisine juriste si délai impossible' },
@@ -1758,7 +1793,7 @@ const MAINT0910_RULES = [
     ref:'SVR10', ouvrage:'BRC',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Débriefing + photos + analyse technique + programmation' },
-  { keys:['problème fermeture coffret','problème ouverture coffret'],
+  { keys:['problème fermeture coffret','problème ouverture coffret','probleme fermeture ouverture de coffret'],
     ref:'SVR10', ouvrage:'BRC',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Information hiérarchique + programmation' },
@@ -1778,7 +1813,9 @@ const MAINT0910_RULES = [
   // ════════════════════════════════════════════
   //  SVR10 — BRC : Repérage OCG/OCC/RDD
   // ════════════════════════════════════════════
-  { keys:['absence plaque repère rob','abs.plaque repère','plaque repère absente','plaque repère robinet'],
+  { keys:['absence plaque repère rob','abs.plaque repère','plaque repère absente','plaque repère robinet',
+          "plaque d'identif absente","plaque d'identification absente","plaque d'identif erronée",
+          "plaque d'identif erronee","plaque d'identification erronée","plaque d'identification erronee"],
     ref:'SVR10', ouvrage:'BRC',
     nature:'R', delai:'R-1 mois', jours:30,
     traitement:'Traitement lors de la GM — Prestataire : contact GRDF' },
@@ -1790,11 +1827,13 @@ const MAINT0910_RULES = [
   // ════════════════════════════════════════════
   //  SVR10 — BRC : Plaque de consigne / clef
   // ════════════════════════════════════════════
-  { keys:['absence plaque consigne ocg','abs.plaque consigne','plaque consigne absente','plaque consigne mauvaise lisibilité'],
+  { keys:['absence plaque consigne ocg','abs.plaque consigne','plaque consigne absente','plaque consigne mauvaise lisibilité',
+          'abs plaque consigne mauvaise lisibilite'],
     ref:'SVR10', ouvrage:'BRC',
     nature:'P', delai:'P-2 ans', jours:730,
     traitement:'Remise au propriétaire (immeubles >400 mbar ou >10 logements)' },
-  { keys:['absence clé coffret','absence clé manœuvre','verre dormant absent','verre dormant détérioré'],
+  { keys:['absence clé coffret','absence clé manœuvre','absence de clé de coffret c','absence de clé de manoeuvre f',
+          'verre dormant absent','verre dormant détérioré'],
     ref:'SVR10', ouvrage:'BRC',
     nature:'P', delai:'P-2 ans', jours:730,
     traitement:'Remise au propriétaire (immeubles >400 mbar ou >10 logements)' },
@@ -1802,11 +1841,11 @@ const MAINT0910_RULES = [
   // ════════════════════════════════════════════
   //  SVR10 — Détendeurs collectifs / DDMP
   // ════════════════════════════════════════════
-  { keys:['dysfonctionnement détendeur','pas de détente au détendeur','surpression au détendeur'],
+  { keys:['dysfonctionnement détendeur','pas de détente au détendeur','surpression au détendeur','pression regulee incorrecte'],
     ref:'SVR10', ouvrage:'BRC/CM',
     nature:'P', delai:'P-1 mois', jours:30,
     traitement:'Info hiérarchique processus régulateur — traitement lors de la GM si possible — sinon ISG Dépannage' },
-  { keys:['lot de rappel','rappel de lot','détendeur identifié dans un lot'],
+  { keys:['lot de rappel','rappel de lot','détendeur identifié dans un lot','cdg detendeur non normalise','cdg detendeur non-normalise'],
     ref:'SVR10', ouvrage:'BRC/CM',
     nature:'P', delai:'P-3 mois', jours:90,
     traitement:'Remplacement immédiat si possible — sinon info hiérarchique + traçabilité GMAO' },
@@ -1822,7 +1861,7 @@ const MAINT0910_RULES = [
     ref:'SVR10', ouvrage:'CM',
     nature:'P', delai:'P-2 ans', jours:730,
     traitement:'Info hiérarchique + programmation travaux' },
-  { keys:['vétusté détendeur','détendeur vétuste'],
+  { keys:['vétusté détendeur','détendeur vétuste','détendeur vetuste hors dgi'],
     ref:'SVR10', ouvrage:'BRC/CM',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Débriefing + photos + analyse technique + programmation éventuelle' },
@@ -1834,11 +1873,13 @@ const MAINT0910_RULES = [
     ref:'SVR10', ouvrage:'BRC',
     nature:'P', delai:'P-18 mois', jours:548,
     traitement:'Procédure Accessibilité (Annexe 1 SVR10) — info syndic — recherche contacts' },
-  { keys:['accès impossible à la ci','accès impossible ci','accès impossible caeu'],
+  { keys:['accès impossible à la ci','accès impossible ci','accès impossible caeu','acces impossible a la ci'],
     ref:'SVR10', ouvrage:'CI',
     nature:'P', delai:'P-18 mois', jours:548,
     traitement:'Procédure Accessibilité (Annexe 1 SVR10) — info syndic — recherche contacts' },
-  { keys:['accès impossible aux ouvrages collectifs','accès impossible conduite montante','accès impossible cm','accès impossible cc','accès impossible no'],
+  { keys:['accès impossible aux ouvrages collectifs','accès impossible conduite montante','accès impossible cm','accès impossible cc','accès impossible no',
+          'accès impossible à la nourrice','acces impossible a la nourrice','acces impossible equipements du poste',
+          'acces installation impossible','acces robinet rdd impossible','acces impossible au robinet 13.2'],
     ref:'SVR10', ouvrage:'CM',
     nature:'P', delai:'P-18 mois', jours:548,
     traitement:'Procédure Accessibilité (Annexe 1 SVR10) — info syndic — recherche contacts' },
@@ -1850,7 +1891,7 @@ const MAINT0910_RULES = [
     ref:'SVR10', ouvrage:'CI/CM',
     nature:'P', delai:'P-2 ans', jours:730,
     traitement:'Vérification étanchéité + mesures conservatoires + MAJ O²' },
-  { keys:['pénétration ci non étanche','pénétration caeu non étanche'],
+  { keys:['pénétration ci non étanche','pénétration caeu non étanche','penetration ci non etanche'],
     ref:'SVR10', ouvrage:'CI',
     nature:'P', delai:'P-1 mois', jours:30,
     traitement:'Traitement lors de la gamme — si impossible : info hiérarchique + traçabilité' },
@@ -1858,11 +1899,13 @@ const MAINT0910_RULES = [
     ref:'SVR10', ouvrage:'CI/CM',
     nature:'P', delai:'IMMÉDIAT', jours:0,
     traitement:'Information hiérarchique immédiate — déclenchement processus fonte grise' },
-  { keys:['vétusté tuyauterie corrodée','vétusté assemblage','tuy. vétuste','assemblage vétuste'],
+  { keys:['vétusté tuyauterie corrodée','vétusté assemblage','tuy. vétuste','assemblage vétuste',
+          'tuy vetuste corrodee chocs sans dgi','vetuste hors dgi'],
     ref:'SVR10', ouvrage:'CI/CM',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Débriefing + photos + analyse technique + programmation éventuelle ou FP' },
-  { keys:['protection mécanique ci détériorée','protection mécanique caeu détériorée'],
+  { keys:['protection mécanique ci détériorée','protection mécanique caeu détériorée',
+          'abs prot meca','protec meca insuf inexist tres mauvais etat','protection mecanique deterioree'],
     ref:'SVR10', ouvrage:'CI',
     nature:'R', delai:'R-3 (NF)', jours:null,
     traitement:'Information syndic pour traitement' },
@@ -1874,11 +1917,13 @@ const MAINT0910_RULES = [
     ref:'SVR10', ouvrage:'CM',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Débriefing + photos + analyse technique + programmation éventuelle' },
-  { keys:['absence de repérage cm','absence repérage conduite montante'],
+  { keys:['absence de repérage cm','absence repérage conduite montante','absence de repérage si plusieurs cm',
+          'reperage manquant pour certains br part'],
     ref:'SVR10', ouvrage:'CM',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Traitement lors de la GM avec contact hiérarchique' },
-  { keys:['non manœuvrabilité robinets cm','non manœuvrabilité robinet cc','non manœuvrabilité robinet no','non manœuvrabilité robinet tc'],
+  { keys:['non manœuvrabilité robinets cm','non manœuvrabilité robinet cc','non manœuvrabilité robinet no','non manœuvrabilité robinet tc',
+          'difficilement manoeuvrable','non manoeuvrabilite'],
     ref:'SVR10', ouvrage:'CM',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Information hiérarchique + programmation' },
@@ -1894,7 +1939,7 @@ const MAINT0910_RULES = [
     ref:'SVR10', ouvrage:'BRC',
     nature:'P', delai:'P-1 mois', jours:30,
     traitement:'Info hiérarchique immédiate + photo + constat huissier + mise en sécurité + service Contentieux' },
-  { keys:['défaillance comptage','bruit compteur hors norme'],
+  { keys:['défaillance comptage','bruit compteur hors norme','mauvais traitement de l information'],
     ref:'SVR10', ouvrage:'BRC',
     nature:'P', delai:'P-1 mois', jours:30,
     traitement:'Traitement lors de la GM si possible — sinon ISG Dépannage' },
@@ -1918,7 +1963,7 @@ const MAINT0910_RULES = [
   // ════════════════════════════════════════════
   //  MAINT0410 — ROB réseau : Accessibilité
   // ════════════════════════════════════════════
-  { keys:['accès regard impossible rob','accès regard robinet','tampon bloqué','trappe bloquée'],
+  { keys:['accès regard impossible rob','accès regard robinet','tampon bloqué','trappe bloquée','absence de tampon ou trappe'],
     ref:'MAINT0410', ouvrage:'ROB', gmaoStatut:'NACC',
     nature:'P', delai:'P-1 mois', jours:30,
     traitement:'Suppression anomalie lors de la GM — si impossible : info CE + statut NACC GMAO + consigne Carpathe + FP' },
@@ -1926,7 +1971,8 @@ const MAINT0910_RULES = [
     ref:'MAINT0410', ouvrage:'ROB', gmaoStatut:'NACC',
     nature:'P', delai:'P-1 mois', jours:30,
     traitement:'Traitement lors de la GM — si impossible : info CE + statut NACC GMAO + échange BERG + FP O2/OMER' },
-  { keys:['non manœuvrabilité rob','robinet non manœuvrable','butée cassée','butée introuvable','perte position boisseau'],
+  { keys:['non manœuvrabilité rob','robinet non manœuvrable','butée cassée','butée introuvable','perte position boisseau',
+          'butee cassee ou introuvable'],
     ref:'MAINT0410', ouvrage:'ROB', gmaoStatut:'NMAN',
     nature:'P', delai:'P-2 ans', jours:730,
     traitement:'Info CE + statut NMAN GMAO + consigne Carpathe + procédure déblocage BERG — si échec : FP + CS4P' },
@@ -1946,19 +1992,21 @@ const MAINT0910_RULES = [
     ref:'MAINT0410', ouvrage:'ROB',
     nature:'R', delai:'R-1 mois', jours:30,
     traitement:'Remplacement immédiat lors de la GM — contact CE pour confirmation numérotation' },
-  { keys:['état robinet non conforme sig','position robinet non conforme'],
+  { keys:['état robinet non conforme sig','position robinet non conforme','etat rob of nonconf se'],
     ref:'MAINT0410', ouvrage:'ROB',
     nature:'R', delai:'R-1 mois', jours:30,
     traitement:'Contact CE immédiat + décision CE' },
-  { keys:['non étanchéité interne rob','étanchéité interne robinet'],
+  { keys:['non étanchéité interne rob','étanchéité interne robinet','non etancheite interne',
+          'non etancheite interne incidt ou autre','non etancheite interne regulateur','non etancheite a la fermeture'],
     ref:'MAINT0410', ouvrage:'ROB',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Info CE immédiate + traçabilité Carpathe + analyse BEX/GROP/BERG + intervention ou déclassement' },
-  { keys:['absence tampon regard rob','tampon regard absent rob'],
+  { keys:['absence tampon regard rob','tampon regard absent rob','tampon ou trappe deteriore'],
     ref:'MAINT0410', ouvrage:'ROB',
     nature:'R', delai:'R-1 mois', jours:30,
     traitement:'Info hiérarchique immédiate + balisage journée + remplacement programmé' },
-  { keys:['regard détérioré rob','regard affaissé','chambre vannes fissurée'],
+  { keys:['regard détérioré rob','regard affaissé','chambre vannes fissurée','chambre de vanne deteriore fissure',
+          "deterioration de l'armoire","connexion event absente endommagee"],
     ref:'MAINT0410', ouvrage:'ROB',
     nature:'R', delai:'R-1 mois', jours:30,
     traitement:'Photos + info hiérarchique + programmation travaux remplacement' },
@@ -1998,7 +2046,7 @@ const MAINT0910_RULES = [
     ref:'MAINT0410', ouvrage:'TDR',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Remplacement immédiat lors de la GM — contact CE pour confirmation numérotation' },
-  { keys:['manœuvre difficile rdd','manœuvre rdd difficile'],
+  { keys:['manœuvre difficile rdd','manœuvre rdd difficile','defaut transmission d etat mecanique'],
     ref:'MAINT0410', ouvrage:'TDR',
     nature:'R', delai:'R-3 (NF)', jours:null,
     traitement:'À traiter lors d\'un renouvellement — fiche problème' },
@@ -2006,7 +2054,7 @@ const MAINT0910_RULES = [
   // ════════════════════════════════════════════
   //  MAINT0520 — SIN : Points singuliers
   // ════════════════════════════════════════════
-  { keys:['zone de transition dégradée','transition air sol dégradée','transition dégradée'],
+  { keys:['zone de transition dégradée','transition air sol dégradée','transition dégradée','zone de transition en mauvais etat'],
     ref:'MAINT0520', ouvrage:'SIN',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Recherche corrosion + suppression origine + réparation/réfection revêtement' },
@@ -2050,7 +2098,7 @@ const MAINT0910_RULES = [
     ref:'MAINT0520', ouvrage:'SIN',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Information maître d\'ouvrage (collectivité/mairie) + suppression contrainte + remplacement/abandon canalisation' },
-  { keys:['absence ventilation galerie','ventilation galerie défaillante'],
+  { keys:['absence ventilation galerie','ventilation galerie défaillante','absence de ventilation galerie technique'],
     ref:'MAINT0520', ouvrage:'SIN',
     nature:'R', delai:'R-2 ans', jours:730,
     traitement:'Dégagement bouche de ventilation + réparation/création bouche de ventilation' },
@@ -2058,31 +2106,252 @@ const MAINT0910_RULES = [
   // ════════════════════════════════════════════
   //  Cas INFO / hors périmètre
   // ════════════════════════════════════════════
-  { keys:['tdr - adresse','tdr-année','saisie non conforme','en local fermé','photo absente','compte-rendu d\'activit'],
+  { keys:['tdr - adresse','tdr-année','saisie non conforme','en local fermé','photo absente','compte-rendu d\'activit',
+          'tdr regulateur a changer','tdr cb errone ou absent plaque','tdr emplacement regulateur errone',
+          'tdr etancheite de la penetration errone','tdr marque du regulateur erronee',
+          'tdr photo emplacem regul inexploitable','tdr photo num serie regul inexploitable',
+          'tdr photo type du regul inexploitable','tdr type de branchement errone',
+          'tdr type de brancht controle impossible','tdr type du regulateur errone'],
     ref:'INFO', ouvrage:'INFO',
     nature:'INFO', delai:'N/A', jours:null,
     traitement:'Mise à jour données SAP — hors périmètre MAINT0910' },
 ];
 
+let MAINT_RULES_ACTIVE = MAINT0910_RULES;
+let CLASSIFICATION_SOURCE_READY = false;
+
+function mapSupplementRuleToInternal(rule) {
+  const ouvrages = Array.isArray(rule?.ouvrages) ? rule.ouvrages.filter(Boolean) : [];
+  return {
+    keys: Array.isArray(rule?.keys) ? rule.keys.filter(Boolean) : [],
+    ref: 'V03_JSON',
+    ouvrage: ouvrages.length === 1 ? ouvrages[0] : (ouvrages.join('/') || '?'),
+    nature: rule?.nature || '?',
+    delai: rule?.delai || '—',
+    jours: Object.prototype.hasOwnProperty.call(rule || {}, 'jours') ? rule.jours : null,
+    traitement: rule?.traitement || 'Vérifier référentiel MAINT',
+  };
+}
+
+async function ensureClassificationRulesSource() {
+  if (CLASSIFICATION_SOURCE_READY) return;
+
+  const isFileProtocol = typeof window !== 'undefined' && window.location?.protocol === 'file:';
+  if (isFileProtocol || typeof fetch !== 'function') {
+    CLASSIFICATION_SOURCE_READY = true;
+    MAINT_RULES_ACTIVE = MAINT0910_RULES;
+    console.info('[V03][CLASSIFICATION] Source active : fallback règles internes');
+    return;
+  }
+
+  try {
+    const res = await fetch('data/maint_rules_supplement.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if (!Array.isArray(json) || !json.length) throw new Error('JSON vide ou invalide');
+
+    const mapped = json.map(mapSupplementRuleToInternal).filter(r => r.keys.length > 0);
+    if (!mapped.length) throw new Error('Aucune règle exploitable');
+
+    MAINT_RULES_ACTIVE = mapped;
+    CLASSIFICATION_SOURCE_READY = true;
+    console.info('[V03][CLASSIFICATION] Source active : JSON data/maint_rules_supplement.json');
+  } catch (err) {
+    MAINT_RULES_ACTIVE = MAINT0910_RULES;
+    CLASSIFICATION_SOURCE_READY = true;
+    console.warn('[V03][CLASSIFICATION] Chargement JSON impossible, fallback interne:', err?.message || err);
+    console.info('[V03][CLASSIFICATION] Source active : fallback règles internes');
+  }
+}
+
 function findMaintRule(defail) {
   if (!defail) return null;
-  const df = defail.toLowerCase();
-  for (const rule of MAINT0910_RULES) {
-    if (rule.keys.some(k => df.includes(k))) return rule;
+  const df = normalizeDefaillance(defail);
+  for (const rule of MAINT_RULES_ACTIVE) {
+    if (rule.keys.some(k => df.includes(normalizeDefaillance(k)))) return rule;
   }
   return null;
+}
+
+function isBRC(a) {
+  return a.ouvrageAvis === 'BRC' || a.ouvrageRef === 'BRC' || a.ouvrageRef === 'BRC/CM';
+}
+
+function isROB(a) {
+  return a.ouvrageAvis === 'ROB' || a.ouvrageRef === 'ROB';
+}
+
+function getAvisPriorityDetail(a) {
+  return ['P1', 'P2', 'R1', 'R2', 'R3'].includes(a.prioGrp) ? a.prioGrp : '';
+}
+
+function getAvisPriorityFamily(a) {
+  const detail = getAvisPriorityDetail(a);
+  if (['R1', 'R2', 'R3'].includes(detail)) return 'R';
+  if (['P1', 'P2'].includes(detail)) return 'P';
+  return a.nature === 'P' || a.nature === 'R' ? a.nature : '';
+}
+
+function matchAvisType(a, type) {
+  if (type === 'nacc') return a.gmaoStatut === 'NACC';
+  if (type === 'nman') return a.gmaoStatut === 'NMAN';
+  if (type.startsWith('ouvrage:')) return a.ouvrageAvis === type.slice(8);
+  if (type.startsWith('ref:')) return (a.ref || '') === type.slice(4);
+  return true;
+}
+
+function getAvisDelayBucket(a) {
+  const label = String(a.delaiLabel || '').toLowerCase();
+  const days = Number.isFinite(a.delaiDays) ? a.delaiDays : null;
+
+  if (days === 30 || label.includes('1 mois')) return '1m';
+  if (days === 548 || label.includes('18 mois')) return '18m';
+  if (days === 730 || label.includes('2 ans')) return '2y';
+  if (days === null || label.includes('nf') || label.includes('n/a') || label === '—') return 'none';
+  return '';
+}
+
+function matchAvisTreatment(a, treatment) {
+  if (treatment === 'with-ot') return Boolean(a.otLie || a.hasOT);
+  if (treatment === 'without-ot') return !a.hasOT;
+  if (treatment === 'overdue') return a.confCode === 'KO';
+  if (treatment === 'on-time') return a.confCode === 'OK';
+  if (treatment === 'nonqualif') return a.confCode === '?';
+  return true;
+}
+
+function updateAvisPresetButtons() {
+  document.querySelectorAll('[data-avis-mode]').forEach(b =>
+    b.classList.toggle('active', b.dataset.avisMode === AVIS_MODE)
+  );
+}
+
+function syncAvisFilterControls() {
+  const ouvrage = document.getElementById('avis-filter-ouvrage');
+  if (ouvrage) ouvrage.value = AVIS_FILTER_STATE.ouvrage || '';
+
+  document.querySelectorAll('.avis-filter-priority').forEach(el => {
+    el.checked = AVIS_FILTER_STATE.priorities.includes(el.value);
+  });
+  document.querySelectorAll('.avis-filter-delay').forEach(el => {
+    el.checked = AVIS_FILTER_STATE.delays.includes(el.value);
+  });
+  document.querySelectorAll('.avis-filter-type').forEach(el => {
+    el.checked = AVIS_FILTER_STATE.types.includes(el.value);
+  });
+  document.querySelectorAll('.avis-filter-treatment').forEach(el => {
+    el.checked = AVIS_FILTER_STATE.treatments.includes(el.value);
+  });
+}
+
+function applyAvisComposedFilters() {
+  FILTERED_AVIS = FILTERED_AVIS_BASE.filter(a => {
+    if (AVIS_FILTER_STATE.ouvrage === 'BRC' && !isBRC(a)) return false;
+    if (AVIS_FILTER_STATE.ouvrage === 'ROB' && !isROB(a)) return false;
+    if (AVIS_FILTER_STATE.priorities.length && !AVIS_FILTER_STATE.priorities.includes(getAvisPriorityDetail(a))) return false;
+    if (AVIS_FILTER_STATE.delays.length && !AVIS_FILTER_STATE.delays.includes(getAvisDelayBucket(a))) return false;
+    if (AVIS_FILTER_STATE.types.length && !AVIS_FILTER_STATE.types.some(t => matchAvisType(a, t))) return false;
+    if (AVIS_FILTER_STATE.treatments.length && !AVIS_FILTER_STATE.treatments.some(t => matchAvisTreatment(a, t))) return false;
+    return true;
+  });
+  if (CURRENT_MODE === 'avis') renderAvis();
+}
+
+function buildDynamicAvisTypeFilters() {
+  const host = document.getElementById('avis-filter-type-dynamic');
+  if (!host) return;
+  host.innerHTML = '';
+
+  const extraOuvrages = [...new Set(AVIS_DATA.map(a => a.ouvrageAvis).filter(v => v && !['?', 'BRC', 'ROB'].includes(v)))].sort();
+  const extraRefs = [...new Set(AVIS_DATA.map(a => a.ref).filter(v => v && !['?', 'SVR10', 'MAINT0410', 'MAINT0520', 'INFO'].includes(v)))].sort();
+
+  const mk = (value, label) => {
+    const lab = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = 'avis-filter-type';
+    input.value = value;
+    input.setAttribute('onchange', 'onAvisFilterChange()');
+    lab.appendChild(input);
+    lab.appendChild(document.createTextNode(' ' + label));
+    host.appendChild(lab);
+  };
+
+  extraOuvrages.forEach(v => mk(`ouvrage:${v}`, v));
+  extraRefs.forEach(v => mk(`ref:${v}`, `Réf ${v}`));
+}
+
+function setAvisPreset(mode) {
+  const preset = {
+    ouvrage: '',
+    priorities: [],
+    delays: [],
+    types: [],
+    treatments: [],
+  };
+
+  switch (mode) {
+    case 'sans-ot':
+      preset.treatments = ['without-ot'];
+      break;
+    case 'ko':
+      preset.treatments = ['overdue'];
+      break;
+    case 'nonqualif':
+      preset.treatments = ['nonqualif'];
+      break;
+    case 'brc-p18':
+      preset.ouvrage = 'BRC';
+      preset.delays = ['18m'];
+      break;
+    case 'brc-p':
+      preset.ouvrage = 'BRC';
+      preset.priorities = ['P1', 'P2'];
+      break;
+    case 'brc-r':
+      preset.ouvrage = 'BRC';
+      preset.priorities = ['R1', 'R2', 'R3'];
+      break;
+    case 'brc-pr':
+      preset.ouvrage = 'BRC';
+      preset.priorities = ['P1', 'P2', 'R1', 'R2', 'R3'];
+      break;
+    case 'rob-nacc':
+      preset.ouvrage = 'ROB';
+      preset.types = ['nacc'];
+      break;
+    case 'rob-nman':
+      preset.ouvrage = 'ROB';
+      preset.types = ['nman'];
+      break;
+    case 'rob-all':
+      preset.ouvrage = 'ROB';
+      break;
+    case 'lies':
+      preset.treatments = ['with-ot'];
+      break;
+    default:
+      break;
+  }
+
+  Object.assign(AVIS_FILTER_STATE, preset);
+  syncAvisFilterControls();
+  applyAvisComposedFilters();
 }
 
 function loadAvisFile(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
+      await ensureClassificationRulesSource();
+
       const wb  = XLSX.read(e.target.result, { type:'array', cellDates:true });
       const ws  = wb.Sheets[wb.SheetNames[0]];
       const raw = XLSX.utils.sheet_to_json(ws, { defval:'' });
       AVIS_DATA = raw.map(parseAvisRow);
+      buildDynamicAvisTypeFilters();
       // Enrichir les selects entité/ouvrage avec les valeurs issues des avis
       mergeAvisFilters();
       // Appliquer les filtres entité/ouvrage déjà actifs
@@ -2178,6 +2447,7 @@ function parseAvisRow(row) {
     ageDays,    hasOT, otNum,
     conformite, confCode, depasse,
     delaiLabel: rule ? rule.delai      : '—',
+    delaiDays:  rule ? rule.jours      : null,
     traitement: rule ? rule.traitement : 'Vérifier MAINT0910',
     nature:     rule ? rule.nature     : '?',
     ref:        rule ? rule.ref        : '?',
@@ -2189,17 +2459,18 @@ function parseAvisRow(row) {
 
 function linkAvisToOT() {
   if (!ALL_DATA.length) return;
-  FILTERED_AVIS.forEach(a => {
+  AVIS_DATA.forEach(a => {
     if (!a.hasOT) return;
     const found = ALL_DATA.find(d => d.numSAP === a.otNum || d.ordre === a.otNum);
     a.otLie = found ? found.numSAP : null;
   });
+  applyAvisFilter();
 }
 
 const PRIO_ORD_AVIS = { F0:0, P1:1, P2:2, R1:3, R2:4, R3:5, Autre:6 };
 
 function renderAvis() {
-  if (!FILTERED_AVIS.length) {
+  if (!AVIS_DATA.length) {
     document.getElementById('avis-empty-banner').style.display = '';
     document.getElementById('avis-content').style.display      = 'none';
     return;
@@ -2212,35 +2483,28 @@ function renderAvis() {
 }
 
 function renderAvisKPIs() {
-  const total    = AVIS_DATA.length;
-  const f0       = FILTERED_AVIS.filter(a => a.isF0).length;
-  const f0SansOT = FILTERED_AVIS.filter(a => a.isF0 && !a.hasOT).length;
+  const total    = FILTERED_AVIS.length;
   const sansOT   = FILTERED_AVIS.filter(a => !a.hasOT).length;
   const ko       = FILTERED_AVIS.filter(a => a.confCode === 'KO').length;
   const lies     = FILTERED_AVIS.filter(a => a.otLie).length;
   const nonQualif = FILTERED_AVIS.filter(a => a.confCode === '?').length;
 
   document.getElementById('avis-kpi-total').textContent   = total.toLocaleString('de-DE');
-  document.getElementById('avis-kpi-f0').textContent      = f0;
-  document.getElementById('avis-kpi-f0-ot').textContent   = f0SansOT;
   document.getElementById('avis-kpi-sans-ot').textContent = sansOT;
   document.getElementById('avis-kpi-ko').textContent      = ko;
   document.getElementById('avis-kpi-lies').textContent    = lies;
   document.getElementById('avis-kpi-nonqualif').textContent = nonQualif;
 
   // ── KPIs BRC spécifiques ──
-  const isBRC = a => a.ouvrageAvis === 'BRC' || a.ouvrageRef === 'BRC' || a.ouvrageRef === 'BRC/CM';
-
   // P-18 mois : accès impossibles
   const brcP18      = FILTERED_AVIS.filter(a => isBRC(a) && a.delaiLabel === 'P-18 mois');
   const brcP18KO    = brcP18.filter(a => a.confCode === 'KO').length;
 
-  // Prescrit hors P-18 (P-1 mois, P-2 ans, P-3 mois, IMMÉDIAT, P-2 ans)
-  const brcP       = FILTERED_AVIS.filter(a => isBRC(a) && a.nature === 'P' && a.delaiLabel !== 'P-18 mois' && a.delaiLabel !== 'IMMÉDIAT');
+  // Prescrit/Recommandé fondés sur la priorité normalisée (priorité SAP d'abord, puis fallback nature)
+  const brcP       = FILTERED_AVIS.filter(a => isBRC(a) && getAvisPriorityFamily(a) === 'P');
   const brcPKO     = brcP.filter(a => a.confCode === 'KO').length;
 
-  // Recommandé (R-1 mois, R-2 ans, R-3)
-  const brcR       = FILTERED_AVIS.filter(a => isBRC(a) && a.nature === 'R');
+  const brcR       = FILTERED_AVIS.filter(a => isBRC(a) && getAvisPriorityFamily(a) === 'R');
   const brcRKO     = brcR.filter(a => a.confCode === 'KO').length;
 
   // Setter HTML : valeur principale = total, sous-valeur = hors délai
@@ -2259,8 +2523,6 @@ function renderAvisKPIs() {
   setBrcKpi('brc-r-total',    'brc-r-ko',    brcR.length,   brcRKO);
 
   // ── KPIs ROB NACC / NMAN ──
-  const isROB = a => a.ouvrageAvis === 'ROB' || a.ouvrageRef === 'ROB';
-
   const robNACC    = FILTERED_AVIS.filter(a => isROB(a) && a.gmaoStatut === 'NACC');
   const robNACCKO  = robNACC.filter(a => a.confCode === 'KO').length;
 
@@ -2278,9 +2540,9 @@ function renderAvisKPIs() {
 function renderAvisCharts() {
   const prioMap  = {};
   FILTERED_AVIS.forEach(a => prioMap[a.prioGrp] = (prioMap[a.prioGrp]||0)+1);
-  const pOrder   = ['F0','P1','P2','R1','R2','R3','Autre'];
-  const pLabels  = { F0:'F0 Fuite', P1:'P1 Prescrit', P2:'P2 Prescrit', R1:'R1 Recom.', R2:'R2 Recom.', R3:'R3 Recom.', Autre:'Autre' };
-  const pColors  = { F0:'#7f1d1d', P1:'#b91c1c', P2:'#c95f00', R1:'#1a4faf', R2:'#6d28d9', R3:'#0f766e', Autre:'#94a3b8' };
+  const pOrder   = ['P1','P2','R1','R2','R3','Autre'];
+  const pLabels  = { P1:'P1 Prescrit', P2:'P2 Prescrit', R1:'R1 Recom.', R2:'R2 Recom.', R3:'R3 Recom.', Autre:'Autre' };
+  const pColors  = { P1:'#b91c1c', P2:'#c95f00', R1:'#1a4faf', R2:'#6d28d9', R3:'#0f766e', Autre:'#94a3b8' };
   const keys     = pOrder.filter(k => prioMap[k]);
 
   if (CHARTS.avisPrio) CHARTS.avisPrio.destroy();
@@ -2315,17 +2577,48 @@ function renderAvisCharts() {
 
 function setAvisMode(mode) {
   AVIS_MODE = mode;
-  document.querySelectorAll('[data-avis-mode]').forEach(b =>
-    b.classList.toggle('active', b.dataset.avisMode === mode)
+  updateAvisPresetButtons();
+  setAvisPreset(mode);
+}
+
+function onAvisFilterChange() {
+  const elO = document.getElementById('avis-filter-ouvrage');
+
+  AVIS_FILTER_STATE.ouvrage = elO ? elO.value : '';
+  AVIS_FILTER_STATE.priorities = [...document.querySelectorAll('.avis-filter-priority:checked')].map(el => el.value);
+  AVIS_FILTER_STATE.delays = [...document.querySelectorAll('.avis-filter-delay:checked')].map(el => el.value);
+  AVIS_FILTER_STATE.types = [...document.querySelectorAll('.avis-filter-type:checked')].map(el => el.value);
+  AVIS_FILTER_STATE.treatments = [...document.querySelectorAll('.avis-filter-treatment:checked')].map(el => el.value);
+
+  AVIS_MODE = 'custom';
+  updateAvisPresetButtons();
+  applyAvisComposedFilters();
+}
+
+function resetAvisFilters() {
+  AVIS_MODE = 'all';
+  updateAvisPresetButtons();
+  Object.assign(AVIS_FILTER_STATE, {
+    ouvrage: '',
+    priorities: [],
+    delays: [],
+    types: [],
+    treatments: [],
+  });
+  syncAvisFilterControls();
+  applyAvisComposedFilters();
+}
+
+function getAvisRowsForTable() {
+  return [...FILTERED_AVIS].sort((a,b) =>
+    (PRIO_ORD_AVIS[a.prioGrp]??9) - (PRIO_ORD_AVIS[b.prioGrp]??9) || b.ageDays - a.ageDays
   );
-  renderAvisTable();
 }
 
 function renderAvisTable() {
   const titles = {
-    'f0':       '🚨 Fuites F0',
     'sans-ot':  '⚠️ Anomalies sans OT correctif',
-    'ko':       '⛔ Hors délai MAINT0910',
+    'ko':       '⛔ Hors délai',
     'lies':     '🔗 Avis liés à un OT chargé',
     'nonqualif':'❓ Anomalies non qualifiées',
     'brc-p18':  '🏢 BRC — Accès impossibles (P-18 mois)',
@@ -2335,37 +2628,10 @@ function renderAvisTable() {
     'rob-nacc': '🔩 ROB — NACC (accès impossible)',
     'rob-nman': '🔩 ROB — NMAN (non manœuvrable)',
     'rob-all':  '🔩 ROB — Toutes anomalies robinets',
+    'custom':   '🧩 Anomalies filtrées',
     'all':      '📋 Tous les avis',
   };
-  let rows;
-  switch(AVIS_MODE) {
-    case 'f0':      rows = FILTERED_AVIS.filter(a => a.isF0);           break;
-    case 'sans-ot': rows = FILTERED_AVIS.filter(a => !a.hasOT);         break;
-    case 'ko':      rows = FILTERED_AVIS.filter(a => a.confCode==='KO'); break;
-    case 'lies':    rows = FILTERED_AVIS.filter(a => a.otLie || a.hasOT);  break;
-    case 'nonqualif': rows = FILTERED_AVIS.filter(a => a.confCode==='?'); break;
-    case 'brc-p18': rows = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='BRC' || a.ouvrageRef==='BRC' || a.ouvrageRef==='BRC/CM') &&
-      a.delaiLabel==='P-18 mois'); break;
-    case 'brc-p': rows = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='BRC' || a.ouvrageRef==='BRC' || a.ouvrageRef==='BRC/CM') &&
-      a.nature==='P' && a.delaiLabel !== 'P-18 mois' && a.delaiLabel !== 'IMMÉDIAT'); break;
-    case 'brc-r': rows = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='BRC' || a.ouvrageRef==='BRC' || a.ouvrageRef==='BRC/CM') &&
-      a.nature==='R'); break;
-    case 'brc-pr':  rows = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='BRC' || a.ouvrageRef==='BRC' || a.ouvrageRef==='BRC/CM')); break;
-    case 'rob-nacc': rows = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='ROB' || a.ouvrageRef==='ROB') && a.gmaoStatut==='NACC'); break;
-    case 'rob-nman': rows = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='ROB' || a.ouvrageRef==='ROB') && a.gmaoStatut==='NMAN'); break;
-    case 'rob-all':  rows = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='ROB' || a.ouvrageRef==='ROB')); break;
-    default:        rows = [...FILTERED_AVIS];
-  }
-  rows = [...rows].sort((a,b) =>
-    (PRIO_ORD_AVIS[a.prioGrp]??9) - (PRIO_ORD_AVIS[b.prioGrp]??9) || b.ageDays - a.ageDays
-  );
+  const rows = getAvisRowsForTable();
   document.getElementById('avis-table-title').textContent =
     (titles[AVIS_MODE] || 'Avis') + ' — ' + rows.length + ' avis';
 
@@ -2378,35 +2644,14 @@ function renderAvisTable() {
 
 function exportExcelAvis() {
   if (!FILTERED_AVIS.length) return;
-
-  let filtered;
-  switch(AVIS_MODE) {
-    case 'f0':       filtered = FILTERED_AVIS.filter(a => a.isF0);            break;
-    case 'sans-ot':  filtered = FILTERED_AVIS.filter(a => !a.hasOT);          break;
-    case 'ko':       filtered = FILTERED_AVIS.filter(a => a.confCode==='KO');  break;
-    case 'lies':     filtered = FILTERED_AVIS.filter(a => a.otLie || a.hasOT);  break;
-    case 'nonqualif':filtered = FILTERED_AVIS.filter(a => a.confCode==='?');   break;
-    case 'brc-p18':  filtered = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='BRC'||a.ouvrageRef==='BRC'||a.ouvrageRef==='BRC/CM') && a.delaiLabel==='P-18 mois'); break;
-    case 'brc-pr':   filtered = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='BRC'||a.ouvrageRef==='BRC'||a.ouvrageRef==='BRC/CM')); break;
-    case 'rob-nacc': filtered = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='ROB'||a.ouvrageRef==='ROB') && a.gmaoStatut==='NACC'); break;
-    case 'rob-nman': filtered = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='ROB'||a.ouvrageRef==='ROB') && a.gmaoStatut==='NMAN'); break;
-    case 'rob-all':  filtered = FILTERED_AVIS.filter(a =>
-      (a.ouvrageAvis==='ROB'||a.ouvrageRef==='ROB')); break;
-    default:         filtered = [...FILTERED_AVIS];
-  }
-  filtered = [...filtered].sort((a,b) =>
-    (PRIO_ORD_AVIS[a.prioGrp]??9) - (PRIO_ORD_AVIS[b.prioGrp]??9) || b.ageDays - a.ageDays
-  );
+  const filtered = getAvisRowsForTable();
 
   const tabLabels = {
-    'f0':'Fuites_F0', 'sans-ot':'Sans_OT', 'ko':'Hors_Delai',
-    'nonqualif':'Non_Qualifiees', 'brc-p18':'BRC_P18mois', 'brc-pr':'BRC_Toutes',
+    'sans-ot':'Sans_OT', 'ko':'Hors_Delai',
+    'nonqualif':'Non_Qualifiees', 'brc-p18':'BRC_P18mois', 'brc-p':'BRC_Prescrit',
+    'brc-r':'BRC_Recommande', 'brc-pr':'BRC_Toutes',
     'rob-nacc':'ROB_NACC', 'rob-nman':'ROB_NMAN', 'rob-all':'ROB_Tous',
-    'lies':'Lies_a_OT', 'all':'Tous'
+    'lies':'Lies_a_OT', 'custom':'Filtres_Combinables', 'all':'Tous'
   };
 
   const rows = filtered.map(a => ({
@@ -2627,7 +2872,7 @@ function _renderAvisRows(rows, query) {
   document.getElementById('search-avis-count').textContent =
     query ? `${visible.length} / ${rows.length} résultats` : '';
 
-  const prioLbl = { F0:'F0 Fuite', P1:'P1 Prescrit', P2:'P2 Prescrit',
+  const prioLbl = { F0:'F0', P1:'P1 Prescrit', P2:'P2 Prescrit',
                     R1:'R1 Recom.', R2:'R2 Recom.', R3:'R3 Recom.', Autre:'Autre' };
   const prioCls = { F0:'prio-f0', P1:'prio-p1', P2:'prio-p2',
                     R1:'prio-r1', R2:'prio-r2', R3:'prio-r3', Autre:'prio-autre' };

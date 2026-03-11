@@ -371,6 +371,69 @@ footer{text-align:center;padding:18px 32px;color:var(--text-muted);font-size:11p
 .mode-tab-avis.active{color:var(--red);}
 .mode-tab-avis.active .mode-tab-count{background:var(--red);color:#fff;}
 
+/* ── Vue Anomalies : compacité et priorité au listing ── */
+#view-avis #avis-content{display:flex;flex-direction:column;gap:10px;}
+#view-avis .kpis{margin-bottom:8px;}
+#view-avis .kpis-brc{margin-bottom:8px;padding:12px 16px;}
+#view-avis .kpi{padding:14px 16px;}
+#view-avis .kpi-value{font-size:26px;}
+#view-avis .kpi-brc-total{font-size:28px;}
+
+.avis-charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0;}
+#view-avis .avis-charts-row .chart-header{padding:10px 14px 0;}
+#view-avis .avis-charts-row .chart-body-donut{min-height:210px;padding:8px 12px 12px;}
+#view-avis .avis-charts-row .chart-body-donut canvas{
+  max-width:220px;max-height:220px;width:220px !important;height:220px !important;
+}
+#view-avis .avis-charts-row .chart-body-bar{height:210px;padding:8px 12px 12px;}
+
+#avis-filters-panel .chart-header{padding:10px 14px 0;}
+#avis-filters-panel .filter-inline-group label{margin-bottom:2px;}
+#avis-filters-panel label{font-size:12px;color:#334155;}
+
+#view-avis .avis-focus-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:0;
+}
+#view-avis .avis-focus-row .avis-focus-block{
+  margin-bottom:0;
+  padding:10px 12px;
+  grid-template-columns:120px repeat(3,minmax(0,1fr));
+}
+#view-avis .avis-focus-row .kpi-brc-card{padding:10px 12px;}
+#view-avis .avis-focus-row .kpi-brc-total{font-size:24px;}
+#view-avis .avis-focus-row .kpi-brc-desc{font-size:9.5px;}
+
+#view-avis .table-section{margin-top:2px;}
+#view-avis .table-header{
+  padding:10px 14px;
+  flex-wrap:nowrap;
+}
+#view-avis .table-header .table-title{
+  flex:1 1 auto;
+  margin-right:12px;
+}
+#view-avis .table-header .table-actions{
+  width:auto;
+  flex:0 0 auto;
+  justify-content:flex-end;
+}
+#view-avis .table-wrapper{
+  max-height:min(68vh,760px);
+  overflow-y:auto;
+  overflow-x:auto;
+}
+
+@media(max-width:1100px){
+  .avis-charts-row{grid-template-columns:1fr;}
+  #view-avis .avis-focus-row{grid-template-columns:1fr;}
+  #view-avis .avis-focus-row .avis-focus-block{grid-template-columns:110px repeat(3,minmax(0,1fr));}
+  #view-avis .avis-charts-row .chart-body-donut{min-height:190px;}
+  #view-avis .avis-charts-row .chart-body-bar{height:190px;}
+}
+
 /* ── Badges priorité avis ── */
 .badge-prio{display:inline-block;padding:2px 8px;border-radius:20px;
   font-size:10px;font-weight:700;white-space:nowrap;}

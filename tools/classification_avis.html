@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Classification des Avis — GRDF</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  :root {
+    --blue-dark:#0f2d5e; --blue:#1a4faf; --blue-light:#e8f0fb;
+    --green:#059669; --green-bg:#ecfdf5;
+    --gray-50:#f8fafc; --gray-100:#f1f5f9; --gray-200:#e2e8f0;
+    --gray-400:#94a3b8; --gray-600:#475569; --gray-800:#1e293b;
+    --border:#dde3ef;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--gray-50);color:var(--gray-800);min-height:100vh;padding:24px;}
+  header{background:var(--blue-dark);color:white;padding:20px 28px;border-radius:12px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  header h1{font-size:18px;font-weight:700;letter-spacing:-.3px;}
+  header p{font-size:13px;opacity:.7;margin-top:3px;}
+  .badge-total{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:6px 16px;font-size:13px;font-weight:600;white-space:nowrap;}
+  .section-note{background:var(--blue-light);border-left:3px solid var(--blue);padding:10px 16px;border-radius:0 8px 8px 0;font-size:12.5px;color:var(--blue);margin-bottom:16px;}
+  .progress-label{font-size:12px;color:var(--gray-600);margin-bottom:6px;display:flex;justify-content:space-between;}
+  .progress-bar-wrap{background:var(--gray-200);border-radius:8px;height:8px;margin-bottom:20px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--green),#34d399);border-radius:8px;transition:width .4s ease;}
+  .toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+  .toolbar-label{font-size:11px;color:var(--gray-600);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-right:2px;}
+  .toolbar-sep{width:1px;background:var(--border);height:22px;margin:0 4px;}
+  .filter-btn{padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);background:white;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--gray-600);}
+  .filter-btn:hover{border-color:var(--blue);color:var(--blue);}
+  .filter-btn.active{background:var(--blue);border-color:var(--blue);color:white;}
+  .btn-export{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:white;border:none;border-radius:8px;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;}
+  .btn-export:hover{background:#047857;}
+  .btn-copy{display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:white;border:none;border-radius:8px;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;}
+  .btn-copy:hover{background:#1340a0;}
+  .card{background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{background:var(--blue-dark);color:white;}
+  thead th{padding:11px 12px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
+  thead th:first-child{padding-left:18px;}
+  tbody tr{border-bottom:1px solid var(--gray-100);transition:background .1s;}
+  tbody tr:hover{background:var(--gray-50);}
+  tbody tr.completed{background:var(--green-bg);}
+  tbody tr.completed:hover{background:#d1fae5;}
+  td{padding:9px 12px;font-size:13px;vertical-align:middle;}
+  td:first-child{padding-left:18px;}
+  .freq-badge{display:inline-block;min-width:32px;text-align:center;padding:2px 7px;border-radius:12px;font-size:11.5px;font-weight:700;font-family:'DM Mono',monospace;}
+  .freq-high{background:#fee2e2;color:#991b1b;}
+  .freq-medium{background:#fef3c7;color:#92400e;}
+  .freq-low{background:var(--gray-100);color:var(--gray-600);}
+  .defail-text{font-weight:500;font-size:13px;max-width:260px;}
+  select{font-family:'DM Sans',sans-serif;font-size:12px;padding:4px 8px;border:1.5px solid var(--border);border-radius:7px;background:white;color:var(--gray-800);cursor:pointer;transition:border-color .15s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;padding-right:24px;}
+  select:focus{outline:none;border-color:var(--blue);}
+  select.filled{border-color:var(--green);background-color:var(--green-bg);color:var(--green);font-weight:600;}
+  select.nature-p{border-color:#f59e0b;background-color:#fffbeb;color:#92400e;font-weight:600;}
+  select.nature-r{border-color:#3b82f6;background-color:#eff6ff;color:#1d4ed8;font-weight:600;}
+  select.nature-info{border-color:var(--gray-400);background-color:var(--gray-100);color:var(--gray-600);font-weight:600;}
+  .delai-select{min-width:125px;}
+  .nature-select{min-width:88px;}
+  .notes-input{font-family:'DM Sans',sans-serif;font-size:12px;padding:4px 8px;border:1.5px solid var(--border);border-radius:7px;width:100%;min-width:150px;color:var(--gray-800);transition:border-color .15s;}
+  .notes-input:focus{outline:none;border-color:var(--blue);}
+  .status-icon{font-size:15px;}
+  .tag-autofill{display:inline-block;background:#e0e7ff;color:#3730a3;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:600;margin-left:5px;vertical-align:middle;}
+
+  /* Ouvrage tags — 5 types issus des données terrain */
+  .ouvrage-cell{display:flex;flex-wrap:wrap;gap:3px;min-width:130px;max-width:165px;}
+  .otag{display:inline-flex;align-items:center;padding:3px 8px;border-radius:5px;font-size:10.5px;font-weight:700;cursor:pointer;border:1.5px solid transparent;transition:all .12s;user-select:none;font-family:'DM Mono',monospace;}
+  .otag:not(.active){opacity:.25;filter:grayscale(.4);}
+  /* BRC = branchement collectif + CI/CM */
+  .otag-BRC{background:#dbeafe;color:#1e40af;} .otag-BRC.active{background:#1e40af;color:white;}
+  /* ROB = robinets réseau */
+  .otag-ROB{background:#d1fae5;color:#065f46;} .otag-ROB.active{background:#065f46;color:white;}
+  /* PDL = poste de livraison / branchement particulier */
+  .otag-PDL{background:#ffedd5;color:#9a3412;} .otag-PDL.active{background:#9a3412;color:white;}
+  /* SIN = points singuliers */
+  .otag-SIN{background:#fef3c7;color:#92400e;} .otag-SIN.active{background:#92400e;color:white;}
+  /* PDR = poste de détente réseau */
+  .otag-PDR{background:#ede9fe;color:#5b21b6;} .otag-PDR.active{background:#5b21b6;color:white;}
+
+  /* Toolbar filter chips */
+  .chip-ov{padding:4px 12px;border-radius:20px;border:1.5px solid var(--border);background:white;font-family:'DM Mono',monospace;font-size:11.5px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--gray-600);}
+  .chip-ov:hover{border-color:var(--blue);}
+  .chip-BRC.on{background:#1e40af;color:white;border-color:#1e40af;}
+  .chip-ROB.on{background:#065f46;color:white;border-color:#065f46;}
+  .chip-PDL.on{background:#9a3412;color:white;border-color:#9a3412;}
+  .chip-SIN.on{background:#92400e;color:white;border-color:#92400e;}
+  .chip-PDR.on{background:#5b21b6;color:white;border-color:#5b21b6;}
+
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--gray-600);margin-bottom:14px;align-items:center;}
+  .legend-item{display:flex;align-items:center;gap:5px;}
+  .legend-dot{width:10px;height:10px;border-radius:3px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🏗️ Classification des avis non qualifiés — GRDF BDSN</h1>
+    <p>Nature + Délai + Notes + Ouvrage pour chaque défaillance. Export JSON pour dashboard.</p>
+  </div>
+  <div class="badge-total" id="badge-total">0 / 72 complétés</div>
+</header>
+
+<div class="section-note">
+  💡 Lignes <strong>vertes</strong> = pré-remplies (SVR10, MAINT0410, MAINT0520). La colonne <strong>Ouvrage</strong> est pré-remplie depuis les données terrain SAP — clique sur un tag pour corriger. <strong>BRC</strong> = branchement collectif + CI/CM.
+</div>
+
+<div class="legend">
+  <span style="font-weight:600;color:var(--gray-800)">Ouvrages :</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#1e40af"></span>BRC — Branchement collectif / CI / CM</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#065f46"></span>ROB — Robinets réseau</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#9a3412"></span>PDL — Poste de livraison / br. particulier</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#92400e"></span>SIN — Points singuliers</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#5b21b6"></span>PDR — Poste de détente réseau</span>
+</div>
+
+<div class="progress-label">
+  <span id="prog-label">Progression</span>
+  <span id="prog-pct">0%</span>
+</div>
+<div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
+
+<div class="toolbar">
+  <span class="toolbar-label">État</span>
+  <button class="filter-btn active" onclick="setFilter('all',event)">Tous</button>
+  <button class="filter-btn" onclick="setFilter('todo',event)">❌ À compléter</button>
+  <button class="filter-btn" onclick="setFilter('done',event)">✅ Complétés</button>
+  <div class="toolbar-sep"></div>
+  <span class="toolbar-label">Ouvrage</span>
+  <button class="chip-ov chip-BRC" onclick="setOvFilter('BRC',this)">BRC</button>
+  <button class="chip-ov chip-ROB" onclick="setOvFilter('ROB',this)">ROB</button>
+  <button class="chip-ov chip-PDL" onclick="setOvFilter('PDL',this)">PDL</button>
+  <button class="chip-ov chip-SIN" onclick="setOvFilter('SIN',this)">SIN</button>
+  <button class="chip-ov chip-PDR" onclick="setOvFilter('PDR',this)">PDR</button>
+  <div style="margin-left:auto;display:flex;gap:8px;">
+    <button class="btn-copy"   onclick="copyJSON()">📋 Copier JSON</button>
+    <button class="btn-export" onclick="exportJSON()">⬇️ Exporter JSON</button>
+  </div>
+</div>
+
+<div class="card">
+<table id="main-table">
+  <thead><tr>
+    <th style="width:36px">#</th>
+    <th style="width:44px">Nb</th>
+    <th>Défaillance SAP / GOTAM</th>
+    <th style="width:95px">Nature</th>
+    <th style="width:135px">Délai</th>
+    <th>Notes / traitement</th>
+    <th style="width:165px">Ouvrage(s)</th>
+    <th style="width:36px">✓</th>
+  </tr></thead>
+  <tbody id="table-body"></tbody>
+</table>
+</div>
+
+<script>
+// 5 types d'ouvrage issus des données terrain SAP réelles
+// BRC = branchement collectif + CI/CM (même code dans poste technique)
+const OUVRAGES = ['BRC','ROB','PDL','SIN','PDR'];
+
+// ── Données : ouvrages pré-remplis depuis Classeur1.xlsx ──────────
+// Règle : si une anomalie n'apparaît pas dans l'Excel → ouvrage vide (à compléter)
+const DEFAILLANCES = [
+  // ACCÈS
+  {defail:'Accès immeuble impossible',                  freq:0,  nature:'P',delai:'P-18 mois',notes:'Procédure Accessibilité annexe 1 SVR',                                                  ouvrages:['BRC'],              auto:true},
+  {defail:'Accès impossible à la CI',                   freq:0,  nature:'P',delai:'P-18 mois',notes:'Procédure Accessibilité',                                                               ouvrages:['BRC'],              auto:true},
+  {defail:'Accès impossible à la Nourrice',             freq:0,  nature:'P',delai:'P-18 mois',notes:'Procédure Accessibilité',                                                               ouvrages:['BRC'],              auto:true},
+  {defail:'Accès impossible au robinet 13.2',           freq:0,  nature:'P',delai:'P-18 mois',notes:'Procédure Accessibilité',                                                               ouvrages:['BRC'],              auto:true},
+  {defail:'Accès impossible Conduite Montante',         freq:21, nature:'P',delai:'P-18 mois',notes:'Procédure Accessibilité + info syndic',                                                 ouvrages:['BRC'],              auto:true},
+  {defail:'Accès impossible équipements du poste',      freq:1,  nature:'P',delai:'P-18 mois',notes:'Procédure Accessibilité',                                                               ouvrages:['PDR'],              auto:true},
+  {defail:'Accès installation impossible',              freq:0,  nature:'P',delai:'P-18 mois',notes:'Procédure Accessibilité',                                                               ouvrages:['SIN'],              auto:true},
+  {defail:'Accès Robinet impossible',                   freq:0,  nature:'P',delai:'P-1 mois', notes:'MAINT0410 — statut NACC GMAO + consigne Carpathe',                                      ouvrages:['ROB','PDL'],        auto:true},
+  {defail:'Accès robinet RDD impossible',               freq:1,  nature:'R',delai:'R-2 ans',  notes:'MAINT0410 — info CE + traitement lors de la GM si possible',                            ouvrages:['ROB'],              auto:true},
+  // ABSENCE
+  {defail:'Abs prot.méca. (pb/cuivre/acier léger)',     freq:48, nature:'R',delai:'R-3',       notes:'MAINT0520 / SVR10 CI — protection mécanique inexistante ou insuffisante',               ouvrages:['BRC'],              auto:true},
+  {defail:'Abs.plaque consigne/mauvaise lisibilité',    freq:16, nature:'P',delai:'P-2 ans',  notes:'Remise au propriétaire (CM > 400 mbar ou > 10 logements)',                              ouvrages:['BRC'],              auto:true},
+  {defail:'Abs.plaque repère rob/mauvai.lisibilité',    freq:0,  nature:'R',delai:'R-1 mois', notes:'SVR10 p.31 — traitement lors de la GM (MCO=Oui)',                                       ouvrages:['BRC'],              auto:true},
+  {defail:'Absence de clé de coffret C',                freq:0,  nature:'P',delai:'P-2 ans',  notes:'Remise au propriétaire',                                                                ouvrages:['BRC'],              auto:true},
+  {defail:'Absence de clé de manoeuvre F',              freq:3,  nature:'P',delai:'P-2 ans',  notes:'Remise au propriétaire',                                                                ouvrages:['BRC'],              auto:true},
+  {defail:'Absence de repérage (si plusieurs CM)',      freq:1,  nature:'R',delai:'R-2 ans',  notes:'Traitement lors de la GM',                                                              ouvrages:['BRC'],              auto:true},
+  {defail:'Absence de tampon ou trappe',                freq:9,  nature:'R',delai:'R-1 mois', notes:'MAINT0410 — balisage immédiat + remplacement programmé',                                ouvrages:['ROB','PDL'],        auto:true},
+  {defail:'Absence de ventilation galerie technique',   freq:1,  nature:'R',delai:'R-2 ans',  notes:'MAINT0520 — réparation/création bouche de ventilation',                                 ouvrages:['SIN'],              auto:true},
+  // B
+  {defail:'Branchement improductif non obturé',         freq:4,  nature:'P',delai:'P-1 mois', notes:'SVR10 p.59 — macaron + bouchon + condamnation OCI (MCO=Oui)',                           ouvrages:['BRC'],              auto:true},
+  {defail:'Butée cassée ou introuvable',                freq:4,  nature:'P',delai:'P-2 ans',  notes:'MAINT0410 — statut NMAN GMAO + procédure déblocage + échange BERG',                     ouvrages:['ROB'],              auto:true},
+  // C
+  {defail:'CDG détendeur non-normalisé',                freq:6,  nature:'P',delai:'P-3 mois', notes:'SVR10 p.40/57/62 — détendeur dans lot de rappel — remplacement immédiat si possible',   ouvrages:['BRC'],              auto:true},
+  {defail:'Chambre de vanne détérioré / fissuré',       freq:11, nature:'R',delai:'R-1 mois', notes:'MAINT0410 p.7 — photos + info hiérarchique + programmation',                            ouvrages:['ROB'],              auto:true},
+  {defail:'Coffret cassé/endommagé',                    freq:1,  nature:'R',delai:'R-2 ans',  notes:'SVR10 p.31 — info hiérarchique + programmation',                                        ouvrages:['BRC'],              auto:true},
+  {defail:'Connexion évent absente, endommagée',        freq:0,  nature:'P',delai:'P-2 ans',  notes:'SVR10 p.40/57/62 — TDR raccordement évent extérieur erroné',                            ouvrages:['BRC'],              auto:true},
+  {defail:'Corrosion superficielle canalisation',       freq:1,  nature:'R',delai:'R-2 ans',  notes:'MAINT0520 — débriefing + photos + analyse technique',                                    ouvrages:['SIN'],              auto:true},
+  // D
+  {defail:'Défaut transmission d\'état (mécanique)',    freq:1,  nature:'R',delai:'R-2 ans',  notes:'MAINT0410 p.7 — info CE + analyse MSG',                                                 ouvrages:['PDL'],              auto:true},
+  {defail:'Détendeur vétuste (hors DGI)',               freq:0,  nature:'R',delai:'R-2 ans',  notes:'SVR10 p.40/57 — débriefing + photos + analyse technique',                               ouvrages:['BRC'],              auto:true},
+  {defail:'Détérioration de l\'armoire',                freq:1,  nature:'R',delai:'R-2 ans',  notes:'SVR10 p.31 — info hiérarchique + programmation',                                        ouvrages:['PDL'],              auto:true},
+  {defail:'Difficilement manoeuvrable',                 freq:23, nature:'R',delai:'R-2 ans',  notes:'MAINT0410 — analyse BEX sous 7 jours + réparation sous 3 mois',                         ouvrages:['ROB'],              auto:true},
+  {defail:'Doute sur présence de fonte grise',          freq:0,  nature:'P',delai:'IMMÉDIAT', notes:'SVR10 p.48/53 — info hiérarchique immédiate — processus fonte grise',                    ouvrages:['BRC'],              auto:true},
+  // E
+  {defail:'Enrouillement bride/manchon',                freq:1,  nature:'R',delai:'R-2 ans',  notes:'MAINT0520 — démontage + mesure épaisseur + réfection',                                  ouvrages:['SIN'],              auto:true},
+  {defail:'Etat ROB (O/F) NonConf / SE',                freq:1,  nature:'R',delai:'R-1 mois', notes:'MAINT0410 p.7 — contact CE immédiat + décision CE',                                     ouvrages:['ROB'],              auto:true},
+  // F
+  {defail:'Fermeture intempestive',                     freq:1,  nature:'R',delai:'R-2 ans',  notes:'MAINT0410 — RDD — traçabilité pour programmation correctif',                             ouvrages:['PDL'],              auto:true},
+  // M
+  {defail:'Mauvais traitement de l\'information',       freq:0,  nature:'', delai:'',         notes:'',                                                                                      ouvrages:['PDL'],              auto:false},
+  {defail:'Mesure compensatoire endommagée',            freq:7,  nature:'R',delai:'R-2 ans',  notes:'MAINT0520 catégorie H — inspection expert + actions correctives',                        ouvrages:['PDL'],              auto:true},
+  // N
+  {defail:'Non étanchéité à la fermeture',              freq:1,  nature:'R',delai:'R-2 ans',  notes:'MAINT0410 p.8 (RDD) — traçabilité pour programmation correctif',                        ouvrages:['BRC'],              auto:true},
+  {defail:'Non étanchéité interne',                     freq:1,  nature:'R',delai:'R-2 ans',  notes:'MAINT0410 p.7 — info CE + analyse BEX/GROP/BERG',                                      ouvrages:['PDL'],              auto:true},
+  {defail:'Non étanchéité interne (incidt ou autre)',   freq:1,  nature:'R',delai:'R-2 ans',  notes:'MAINT0410 p.7 — info CE + analyse BEX/GROP/BERG',                                      ouvrages:['ROB'],              auto:true},
+  {defail:'Non étanchéité interne régulateur',          freq:1,  nature:'P',delai:'P-1 mois', notes:'SVR10 p.40/57/62 — processus régulateur (HP GRDF)',                                     ouvrages:['PDL'],              auto:true},
+  {defail:'Non manoeuvrabilité',                        freq:0,  nature:'P',delai:'P-2 ans',  notes:'MAINT0410 — statut NMAN GMAO + procédure déblocage + échange BERG',                     ouvrages:['ROB'],              auto:true},
+  {defail:'Non manoeuvrabilité de l\'OCG',              freq:0,  nature:'P',delai:'P-2 ans',  notes:'SVR10 p.34 — fiche manœuvre SP obligatoire (HP GRDF)',                                  ouvrages:['BRC'],              auto:true},
+  // O
+  {defail:'OCG absent ou non visible',                  freq:0,  nature:'P',delai:'P-2 ans',  notes:'SVR10 p.31 — absence robinet ou non visibilité regard/coffret',                         ouvrages:['BRC'],              auto:true},
+  {defail:'OCG non accessible',                         freq:0,  nature:'P',delai:'P-1 mois', notes:'SVR10 p.30 — regard visible, robinet non accessible',                                    ouvrages:['BRC'],              auto:true},
+  {defail:'Objets accrochés à la tuyauterie',           freq:9,  nature:'R',delai:'R-2 ans',  notes:'MAINT0520 — remplacement/pose support + nouvel isolant',                                ouvrages:['SIN'],              auto:true},
+  {defail:'Objets déposés dans la gaine',               freq:116,nature:'R',delai:'R-3',       notes:'Signalement syndic/gardien — levée obstacle lors de la prochaine intervention',          ouvrages:['BRC'],              auto:true},
+  // P
+  {defail:'Pénétration CI non étanche',                 freq:0,  nature:'P',delai:'P-1 mois', notes:'SVR10 p.49 — mastic SNFJ (MCO=Oui)',                                                    ouvrages:['BRC'],              auto:true},
+  {defail:'Plaque d\'identif. absente',                 freq:0,  nature:'R',delai:'R-1 mois', notes:'MAINT0410 — remplacement immédiat lors de la GM (MCO=Oui)',                              ouvrages:['ROB'],              auto:true},
+  {defail:'Plaque d\'identif. erronée',                 freq:0,  nature:'R',delai:'R-1 mois', notes:'MAINT0410 — modification/suppression plaques (MCO=Oui)',                                 ouvrages:['ROB'],              auto:true},
+  {defail:'Plaque d\'identification erronée',           freq:0,  nature:'R',delai:'R-1 mois', notes:'MAINT0410 — modification/suppression plaques (MCO=Oui)',                                 ouvrages:['ROB'],              auto:true},
+  {defail:'Plaque de repérage absente',                 freq:0,  nature:'R',delai:'R-1 mois', notes:'SVR10 p.31 / MAINT0410 — traitement lors de la GM (MCO=Oui)',                           ouvrages:['ROB'],              auto:true},
+  {defail:'Plaque de repérage erronée',                 freq:14, nature:'R',delai:'R-1 mois', notes:'Traitement lors de la GM',                                                               ouvrages:['ROB'],              auto:true},
+  {defail:'Pression Régulée Incorrecte',                freq:3,  nature:'P',delai:'P-1 mois', notes:'SVR10 p.40/57/62 — processus régulateur (HP GRDF)',                                     ouvrages:['PDL'],              auto:true},
+  {defail:'Problème fermeture/ouverture de coffret',    freq:1,  nature:'R',delai:'R-2 ans',  notes:'SVR10 p.31 — info hiérarchique + programmation',                                        ouvrages:['BRC'],              auto:true},
+  {defail:'Problème fermeture/ouverture de la gaine',   freq:33, nature:'R',delai:'R-2 ans',  notes:'Difficulté accès gaine technique — info syndic + programmation',                         ouvrages:['BRC'],              auto:true},
+  {defail:'Protec méca insuf/inexist/très mauv état',   freq:1,  nature:'P',delai:'P-2 ans',  notes:'SVR10 CI — protection mécanique inexistante/insuffisante',                               ouvrages:['SIN'],              auto:true},
+  {defail:'Protection mécanique détériorée',            freq:0,  nature:'R',delai:'R-3',       notes:'SVR10 p.50 / MAINT0520 — réfection protection mécanique',                              ouvrages:['BRC'],              auto:true},
+  // R
+  {defail:'Repèrage manquant pour certains br.part.',   freq:4,  nature:'R',delai:'R-2 ans',  notes:'SVR10 p.55 — triple concordance lors de la maintenance',                                 ouvrages:['BRC'],              auto:true},
+  // T - Tampon
+  {defail:'Tampon ou trappe détérioré',                 freq:7,  nature:'R',delai:'R-1 mois', notes:'MAINT0410 p.7 — photos + info hiérarchique + programmation',                            ouvrages:['ROB'],              auto:true},
+  // T - TDR (tous sous BRC dans les données terrain)
+  {defail:'TDR - Adresse introuvable',                  freq:0,  nature:'', delai:'',         notes:'',                                                                                      ouvrages:['BRC'],              auto:false},
+  {defail:'TDR régulateur à changer',                   freq:0,  nature:'P',delai:'P-3 mois', notes:'SVR10 — détendeur dans lot de rappel — remplacement immédiat si possible (HP GRDF)',     ouvrages:['PDL'],              auto:true},
+  {defail:'TDR-Année du régulateur erronée',            freq:0,  nature:'R',delai:'R-1 mois', notes:'SVR10 — correction données TDR lors de la GM',                                          ouvrages:['BRC'],              auto:true},
+  {defail:'TDR-CB erroné ou absent plaque',             freq:0,  nature:'R',delai:'R-1 mois', notes:'SVR10 — correction données TDR lors de la GM',                                          ouvrages:['BRC'],              auto:true},
+  {defail:'TDR-Emplacement régulateur erroné',          freq:0,  nature:'R',delai:'R-1 mois', notes:'SVR10 — correction données TDR lors de la GM',                                          ouvrages:['BRC'],              auto:true},
+  {defail:'TDR-Etanchéité de la pénétration erroné',    freq:0,  nature:'P',delai:'P-1 mois', notes:'SVR10 p.49 — mastic SNFJ (MCO=Oui)',                                                    ouvrages:['BRC'],              auto:true},
+  {defail:'TDR-Marque du régulateur erronée',           freq:0,  nature:'R',delai:'R-1 mois', notes:'SVR10 — correction données TDR lors de la GM',                                          ouvrages:['BRC'],              auto:true},
+  {defail:'TDR-Photo emplacem régul inexploitable',     freq:0,  nature:'R',delai:'R-1 mois', notes:'SVR10 — reprendre photo lors de la prochaine visite',                                    ouvrages:['BRC'],              auto:true},
+  {defail:'TDR-Photo Num série régul inexploitable',    freq:0,  nature:'R',delai:'R-1 mois', notes:'SVR10 — reprendre photo lors de la prochaine visite',                                    ouvrages:['BRC'],              auto:true},
+  {defail:'TDR-Photo Type du régul inexploitable',      freq:0,  nature:'R',delai:'R-1 mois', notes:'SVR10 — reprendre photo lors de la prochaine visite',                                    ouvrages:['BRC'],              auto:true},
+  {defail:'TDR-Raccordement évent extérieur erroné',    freq:0,  nature:'P',delai:'P-2 ans',  notes:'SVR10 p.40/57/62 — raccordement lors de la maintenance si possible',                     ouvrages:['BRC'],              auto:true},
+  {defail:'TDR-Type de branchement erroné',             freq:0,  nature:'R',delai:'R-1 mois', notes:'SVR10 — correction données TDR lors de la GM',                                          ouvrages:['BRC'],              auto:true},
+  {defail:'TDR-Type de brancht contrôle impossible',    freq:0,  nature:'P',delai:'P-18 mois',notes:'SVR10 — procédure Accessibilité',                                                        ouvrages:['BRC'],              auto:true},
+  {defail:'TDR-Type du régulateur erroné',              freq:0,  nature:'R',delai:'R-1 mois', notes:'SVR10 — correction données TDR lors de la GM',                                          ouvrages:['BRC'],              auto:true},
+  // T - Tuyauterie
+  {defail:'Tuy. vétuste/corrodée/chocs (sans DGI)',     freq:2,  nature:'R',delai:'R-2 ans',  notes:'SVR10 p.48/53 — débriefing + photos + analyse technique',                               ouvrages:['BRC'],              auto:true},
+  // V
+  {defail:'Verre dormant absent ou détérioré',          freq:0,  nature:'P',delai:'P-2 ans',  notes:'SVR10 p.43 — remise propriétaire',                                                      ouvrages:['BRC'],              auto:true},
+  {defail:'Vétusté (hors DGI)',                         freq:2,  nature:'R',delai:'R-2 ans',  notes:'SVR10 p.31/57 — débriefing + photos + analyse technique',                               ouvrages:['BRC'],              auto:true},
+  // Z
+  {defail:'Zone de transition en mauvais état',         freq:1,  nature:'R',delai:'R-2 ans',  notes:'MAINT0520 p.7 — recherche corrosion + réfection revêtement',                            ouvrages:['SIN'],              auto:true},
+  // Pb accès
+  {defail:'Pb d\'accès aux équipements(rob/conduite)',  freq:13, nature:'P',delai:'P-18 mois',notes:'Procédure Accessibilité',                                                                ouvrages:['BRC'],              auto:true},
+];
+
+const DELAIS_OPTIONS = [
+  {value:'',label:'— Choisir —'},{value:'IMMÉDIAT',label:'IMMÉDIAT'},
+  {value:'P-1 mois',label:'P-1 mois'},{value:'P-3 mois',label:'P-3 mois'},
+  {value:'P-18 mois',label:'P-18 mois'},{value:'P-2 ans',label:'P-2 ans'},
+  {value:'R-1 mois',label:'R-1 mois'},{value:'R-2 ans',label:'R-2 ans'},
+  {value:'R-3',label:'R-3 (pas de délai)'},{value:'N/A',label:'INFO / N/A'},
+];
+const NATURE_OPTIONS = [
+  {value:'',label:'—'},{value:'P',label:'P (Prescrit)'},
+  {value:'R',label:'R (Recommandé)'},{value:'INFO',label:'INFO'},
+];
+
+let stateFilter='all', ovFilter=null;
+
+function freqClass(n){return n>=20?'freq-high':n>=5?'freq-medium':'freq-low';}
+
+function buildTable(){
+  const tbody=document.getElementById('table-body');
+  tbody.innerHTML='';
+  DEFAILLANCES.forEach((row,i)=>{
+    const isDone=row.nature&&row.delai;
+    const tr=document.createElement('tr');
+    tr.id='row-'+i;
+    if(isDone)tr.classList.add('completed');
+    const autoTag=row.auto?'<span class="tag-autofill">AUTO</span>':'';
+    const nSel=NATURE_OPTIONS.map(o=>`<option value="${o.value}"${row.nature===o.value?' selected':''}>${o.label}</option>`).join('');
+    const dSel=DELAIS_OPTIONS.map(o=>`<option value="${o.value}"${row.delai===o.value?' selected':''}>${o.label}</option>`).join('');
+    const nCls=row.nature==='P'?'nature-p':row.nature==='R'?'nature-r':row.nature==='INFO'?'nature-info':'';
+    const dCls=row.delai?'filled':'';
+    const fDisp=row.freq>0?row.freq:'–';
+    const ovHTML=OUVRAGES.map(ov=>{
+      const act=row.ouvrages&&row.ouvrages.includes(ov)?'active':'';
+      return `<span class="otag otag-${ov} ${act}" onclick="toggleOv(${i},'${ov}',this)">${ov}</span>`;
+    }).join('');
+    tr.innerHTML=`
+      <td style="color:var(--gray-400);font-size:11px;font-family:'DM Mono',monospace">${i+1}</td>
+      <td><span class="freq-badge ${freqClass(row.freq)}">${fDisp}</span></td>
+      <td class="defail-text">${row.defail}${autoTag}</td>
+      <td><select class="nature-select ${nCls}" onchange="updateRow(${i},'nature',this.value)">${nSel}</select></td>
+      <td><select class="delai-select ${dCls}"  onchange="updateRow(${i},'delai',this.value)">${dSel}</select></td>
+      <td><input class="notes-input" type="text" value="${(row.notes||'').replace(/"/g,'&quot;')}" placeholder="Traitement prescrit, source…" oninput="updateRow(${i},'notes',this.value)"></td>
+      <td><div class="ouvrage-cell">${ovHTML}</div></td>
+      <td class="status-icon">${isDone?'✅':'⬜'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  applyFilters();
+  updateProgress();
+}
+
+function toggleOv(i,ov,el){
+  const row=DEFAILLANCES[i];
+  if(!row.ouvrages)row.ouvrages=[];
+  const idx=row.ouvrages.indexOf(ov);
+  if(idx===-1){row.ouvrages.push(ov);el.classList.add('active');}
+  else{row.ouvrages.splice(idx,1);el.classList.remove('active');}
+}
+function updateRow(i,field,value){
+  DEFAILLANCES[i][field]=value;
+  const tr=document.getElementById('row-'+i);
+  const isDone=DEFAILLANCES[i].nature&&DEFAILLANCES[i].delai;
+  const v=DEFAILLANCES[i].nature;
+  tr.querySelector('.nature-select').className='nature-select '+(v==='P'?'nature-p':v==='R'?'nature-r':v==='INFO'?'nature-info':'');
+  tr.querySelector('.delai-select').className='delai-select '+(DEFAILLANCES[i].delai?'filled':'');
+  tr.querySelector('.status-icon').textContent=isDone?'✅':'⬜';
+  if(isDone)tr.classList.add('completed');else tr.classList.remove('completed');
+  updateProgress();applyFilters();
+}
+function setFilter(f,e){
+  stateFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  if(e&&e.target)e.target.classList.add('active');
+  applyFilters();
+}
+function setOvFilter(ov,el){
+  if(ovFilter===ov){ovFilter=null;document.querySelectorAll('.chip-ov').forEach(b=>b.classList.remove('on'));}
+  else{ovFilter=ov;document.querySelectorAll('.chip-ov').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+  applyFilters();
+}
+function applyFilters(){
+  DEFAILLANCES.forEach((row,i)=>{
+    const tr=document.getElementById('row-'+i);if(!tr)return;
+    const isDone=row.nature&&row.delai;
+    let show=true;
+    if(stateFilter==='todo'&&isDone)show=false;
+    if(stateFilter==='done'&&!isDone)show=false;
+    if(ovFilter&&!(row.ouvrages&&row.ouvrages.includes(ovFilter)))show=false;
+    tr.style.display=show?'':'none';
+  });
+}
+function updateProgress(){
+  const done=DEFAILLANCES.filter(r=>r.nature&&r.delai).length,total=DEFAILLANCES.length,pct=Math.round(done/total*100);
+  document.getElementById('progress-bar').style.width=pct+'%';
+  document.getElementById('prog-pct').textContent=pct+'%';
+  document.getElementById('prog-label').textContent=`${done} / ${total} défaillances classifiées`;
+  document.getElementById('badge-total').textContent=`${done} / ${total} complétés`;
+}
+function buildJSON(){
+  const j={'IMMÉDIAT':0,'P-1 mois':30,'P-3 mois':90,'P-18 mois':548,'P-2 ans':730,'R-1 mois':30,'R-2 ans':730,'R-3':null,'N/A':null};
+  return JSON.stringify(DEFAILLANCES.filter(r=>r.nature&&r.delai).map(r=>({
+    keys:[r.defail.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0153/g,'oe').replace(/['']/g,"'").replace(/\s+/g,' ').trim()],
+    nature:r.nature,delai:r.delai,jours:j[r.delai]??null,
+    traitement:r.notes||'—',ouvrages:r.ouvrages||[],
+    _source:r.defail,_freq:r.freq
+  })),null,2);
+}
+function exportJSON(){
+  const blob=new Blob([buildJSON()],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='maint_rules_supplement.json';a.click();URL.revokeObjectURL(url);
+}
+function copyJSON(){
+  navigator.clipboard.writeText(buildJSON()).then(()=>{
+    const btn=event.target,orig=btn.textContent;
+    btn.textContent='✅ Copié !';setTimeout(()=>btn.textContent=orig,2000);
+  });
+}
+buildTable();
+</script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classification des avis - Codes defaillance</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #007f3d;
+      --accent2: #005f8f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background: linear-gradient(180deg, #f8fbff 0%, #f3f7f3 100%);
+      color: var(--text);
+    }
+    .wrap { max-width: 1400px; margin: 0 auto; }
+    .head { margin-bottom: 16px; }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    .hint { margin: 0; color: var(--muted); }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 16px 0;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    button.secondary {
+      background: var(--accent2);
+      color: #fff;
+      border-color: var(--accent2);
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    }
+    .table-wrap { overflow: auto; max-height: 65vh; }
+    table { width: 100%; border-collapse: collapse; min-width: 1200px; }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px;
+      vertical-align: top;
+      font-size: 13px;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #f9fafb;
+      text-align: left;
+      z-index: 2;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    textarea { min-height: 40px; resize: vertical; }
+    .muted { color: var(--muted); font-size: 12px; }
+    #jsonOut {
+      width: 100%;
+      min-height: 240px;
+      margin-top: 12px;
+      background: #0b1020;
+      color: #d1f7ff;
+      border-radius: 10px;
+      border: none;
+      padding: 12px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>Classification des avis - referentiel complet des codes</h1>
+      <p class="hint">Codes Gotham precharges a partir des captures + MAINT/SVR. Champs laisses vides quand non identifies de maniere fiable.</p>
+    </div>
+
+    <div class="toolbar">
+      <button class="primary" onclick="addRow()">Ajouter un code</button>
+      <button class="secondary" onclick="buildJson()">Generer JSON</button>
+      <button onclick="downloadJson()">Telecharger JSON</button>
+      <button onclick="resetData()">Reinitialiser</button>
+      <span class="muted" id="count"></span>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 320px;">Code defaillance (Description)</th>
+              <th style="width: 80px;">Nature</th>
+              <th style="width: 120px;">Delai</th>
+              <th style="width: 80px;">Jours</th>
+              <th>Note de traitement</th>
+              <th style="width: 120px;">Source</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <textarea id="jsonOut" placeholder="Le JSON genere apparait ici..."></textarea>
+  </div>
+
+<script>
+const BASE_DATA = [
+  { code: "Abs prot.meca. (pb/cuivre/acier leger)", nature: "R", delai: "R-3", jours: "", traitement: "Information syndic pour traitement", source: "SVR10" },
+  { code: "Abs.plaque consigne/mauvaise lisibilite", nature: "P", delai: "P-2 ans", jours: 730, traitement: "Remise au proprietaire (immeubles >400 mbar ou >10 logements)", source: "SVR10" },
+  { code: "Abs.plaque repere rob/mauvai.lisibilite", nature: "R", delai: "R-1 mois", jours: 30, traitement: "Traitement lors de la GM", source: "SVR10" },
+  { code: "Absence de cle de coffret C", nature: "P", delai: "P-2 ans", jours: 730, traitement: "Remise au proprietaire", source: "SVR10" },
+  { code: "Absence de cle de manoeuvre F", nature: "P", delai: "P-2 ans", jours: 730, traitement: "Remise au proprietaire", source: "SVR10" },
+  { code: "Absence de reperage (si plusieurs CM)", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Traitement lors de la GM + info hierarchique", source: "SVR10" },
+  { code: "Absence de tampon ou trappe", nature: "R", delai: "R-1 mois", jours: 30, traitement: "Balisage + securisation journee + remplacement programme", source: "MAINT0410" },
+  { code: "Absence de ventilation galerie technique", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Degagement/reparation ventilation galerie", source: "MAINT0520" },
+  { code: "Acces immeuble impossible", nature: "P", delai: "P-18 mois", jours: 548, traitement: "Procedure accessibilite + info syndic", source: "SVR10" },
+  { code: "Acces impossible a la CI", nature: "P", delai: "P-18 mois", jours: 548, traitement: "Procedure accessibilite + info syndic", source: "SVR10" },
+  { code: "Acces impossible a la Nourrice", nature: "P", delai: "P-18 mois", jours: 548, traitement: "Procedure accessibilite + info syndic", source: "SVR10" },
+  { code: "Acces impossible au robinet 13.2", nature: "P", delai: "P-18 mois", jours: 548, traitement: "Procedure accessibilite + info syndic", source: "SVR10" },
+  { code: "Acces impossible Conduite Montante", nature: "P", delai: "P-18 mois", jours: 548, traitement: "Procedure accessibilite + info syndic", source: "SVR10" },
+  { code: "Acces impossible equipements du poste", nature: "P", delai: "P-18 mois", jours: 548, traitement: "Procedure accessibilite + info syndic", source: "SVR10" },
+  { code: "Acces installation impossible", nature: "P", delai: "P-18 mois", jours: 548, traitement: "Procedure accessibilite + info syndic", source: "SVR10" },
+  { code: "Acces Robinet impossible", nature: "P", delai: "P-1 mois", jours: 30, traitement: "Suppression anomalie GM ou NACC", source: "MAINT0410" },
+  { code: "Acces robinet RDD impossible", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Tracabilite + programmation correctif", source: "MAINT0410" },
+  { code: "Branchement improductif non obture", nature: "P", delai: "P-1 mois", jours: 30, traitement: "Procedure securisation + info hierarchique", source: "SVR10" },
+  { code: "Butee cassee ou introuvable", nature: "P", delai: "P-2 ans", jours: 730, traitement: "Procedure deblocage + trace Carpathe", source: "MAINT0410" },
+  { code: "CDG detendeur non-normalise", nature: "P", delai: "P-3 mois", jours: 90, traitement: "Remplacement detendeur + tracabilite", source: "SVR10" },
+  { code: "Chambre de vanne deteriore / fissure", nature: "R", delai: "R-1 mois", jours: 30, traitement: "Photos + info hierarchique + programmation", source: "MAINT0410" },
+  { code: "Coffret casse/endommage", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Debriefing + photos + programmation", source: "SVR10" },
+  { code: "Connexion event absente, endommagee", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "Corrosion superficielle canalisation", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Debriefing + photos + analyse technique", source: "SVR10" },
+  { code: "Defaut transmission d'etat (mecanique)", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "Detendeur vetuste (hors DGI)", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Debriefing + photos + analyse technique", source: "SVR10" },
+  { code: "Deterioration de l'armoire", nature: "R", delai: "R-1 mois", jours: 30, traitement: "Photos + info hierarchique + programmation", source: "MAINT0410" },
+  { code: "Difficilement manoeuvrable", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Information hierarchique + programmation", source: "SVR10" },
+  { code: "Doute sur presence de fonte grise", nature: "P", delai: "IMMEDIAT", jours: 0, traitement: "Information hierarchique immediate + processus fonte grise", source: "SVR10" },
+  { code: "Enrouillement bride/manchon", nature: "R", delai: "R-3", jours: "", traitement: "Suppression origine corrosion + reparation/changement assemblage", source: "MAINT0520" },
+  { code: "Etat ROB (O/F) NonConf / SE", nature: "R", delai: "R-1 mois", jours: 30, traitement: "Contact CE immediate + decision CE", source: "MAINT0410" },
+  { code: "Fermeture intempestive", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "Mauvais traitement de l'information", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "Mesure compensatoire endommagee", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "Non etancheite a la fermeture", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Info CE + tracabilite + analyse BEX/GROP/BERG", source: "MAINT0410" },
+  { code: "Non etancheite interne", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Info CE + tracabilite + analyse BEX/GROP/BERG", source: "MAINT0410" },
+  { code: "Non etancheite interne (incidt ou autre)", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Info CE + tracabilite + analyse BEX/GROP/BERG", source: "MAINT0410" },
+  { code: "Non etancheite interne regulateur", nature: "P", delai: "P-1 mois", jours: 30, traitement: "Processus regulateur + ISG depannage", source: "SVR10" },
+  { code: "Non manoeuvrabilite", nature: "P", delai: "P-2 ans", jours: 730, traitement: "Procedure deblocage + analyse BERG", source: "MAINT0410" },
+  { code: "Non manoeuvrabilite de l'OCG", nature: "P", delai: "P-2 ans", jours: 730, traitement: "Info hierarchique + info gestionnaire", source: "SVR10" },
+  { code: "OCG absent ou non visible", nature: "P", delai: "P-2 ans", jours: 730, traitement: "Info hierarchique + info gestionnaire + autorisation", source: "SVR10" },
+  { code: "OCG non accessible", nature: "P", delai: "P-1 mois", jours: 30, traitement: "Realisation lors de la GM + info hierarchique", source: "SVR10" },
+  { code: "Penetration CI non etanche", nature: "P", delai: "P-1 mois", jours: 30, traitement: "Traitement lors de la gamme", source: "SVR10" },
+  { code: "Plaque de reperage absente", nature: "R", delai: "R-1 mois", jours: 30, traitement: "Traitement lors de la GM", source: "SVR10" },
+  { code: "Plaque de reperage erronee", nature: "R", delai: "R-1 mois", jours: 30, traitement: "Modification/suppression plaque", source: "SVR10" },
+  { code: "Plaque d'identif. absente", nature: "R", delai: "R-1 mois", jours: 30, traitement: "Traitement lors de la GM", source: "SVR10" },
+  { code: "Plaque d'identif. erronee", nature: "R", delai: "R-1 mois", jours: 30, traitement: "Traitement lors de la GM", source: "SVR10" },
+  { code: "Plaque d'identification erronee", nature: "R", delai: "R-1 mois", jours: 30, traitement: "Traitement lors de la GM", source: "SVR10" },
+  { code: "Pression Regulee Incorrecte", nature: "P", delai: "P-1 mois", jours: 30, traitement: "Processus regulateur / ISG depannage", source: "SVR10" },
+  { code: "Probleme fermeture/ouverture de coffret", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Information hierarchique + programmation", source: "SVR10" },
+  { code: "Protec meca insuf/inexist/tres mauvais etat", nature: "R", delai: "R-3", jours: "", traitement: "Information syndic pour traitement", source: "SVR10" },
+  { code: "Protection mecanique deterioree", nature: "R", delai: "R-3", jours: "", traitement: "Information syndic pour traitement", source: "SVR10" },
+  { code: "Reperage manquant pour certains br.part.", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Traitement lors de la GM + info hierarchique", source: "SVR10" },
+  { code: "Tampon ou trappe deteriore", nature: "R", delai: "R-1 mois", jours: 30, traitement: "Balisage + securisation journee + remplacement programme", source: "MAINT0410" },
+  { code: "TDR - Adresse introuvable", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR regulateur a changer", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-Annee du regulateur erronee", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-CB errone ou absent plaque", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-Emplacement regulateur errone", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-Etancheite de la penetration errone", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-Marque du regulateur erronee", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-Photo emplacem regul inexploitable", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-Photo Num serie regul inexploitable", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-Photo Type du regul inexploitable", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-Raccordement event exterieur errone", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-Type de branchement errone", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-Type de brancht controle impossible", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "TDR-Type du regulateur errone", nature: "", delai: "", jours: "", traitement: "", source: "" },
+  { code: "Tuy. vetuste/corrodee/chocs (sans DGI)", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Debriefing + photos + analyse technique", source: "SVR10" },
+  { code: "Verre dormant absent ou deteriore", nature: "P", delai: "P-2 ans", jours: 730, traitement: "Remise au proprietaire", source: "SVR10" },
+  { code: "Vetuste (hors DGI)", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Debriefing + photos + analyse technique", source: "SVR10" },
+  { code: "Zone de transition en mauvais etat", nature: "R", delai: "R-2 ans", jours: 730, traitement: "Recherche corrosion + refection revetement", source: "MAINT0520" }
+];
+
+let data = JSON.parse(JSON.stringify(BASE_DATA));
+
+function render() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  data.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${escapeHtml(row.code)}" onchange="setVal(${i},'code',this.value)" /></td>
+      <td>
+        <select onchange="setVal(${i},'nature',this.value)">
+          <option value="" ${row.nature === '' ? 'selected' : ''}></option>
+          <option value="P" ${row.nature === 'P' ? 'selected' : ''}>P</option>
+          <option value="R" ${row.nature === 'R' ? 'selected' : ''}>R</option>
+          <option value="INFO" ${row.nature === 'INFO' ? 'selected' : ''}>INFO</option>
+        </select>
+      </td>
+      <td><input value="${escapeHtml(row.delai || '')}" onchange="setVal(${i},'delai',this.value)" /></td>
+      <td><input value="${escapeHtml(row.jours === null || row.jours === undefined ? '' : String(row.jours))}" onchange="setVal(${i},'jours',this.value)" /></td>
+      <td><textarea onchange="setVal(${i},'traitement',this.value)">${escapeHtml(row.traitement || '')}</textarea></td>
+      <td><input value="${escapeHtml(row.source || '')}" onchange="setVal(${i},'source',this.value)" /></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('count').textContent = `${data.length} codes`;
+}
+
+function setVal(i, k, v) { data[i][k] = v; }
+
+function addRow() {
+  data.push({ code: '', nature: '', delai: '', jours: '', traitement: '', source: '' });
+  render();
+}
+
+function buildJson() {
+  const cleaned = data
+    .map(r => ({
+      code: (r.code || '').trim(),
+      nature: (r.nature || '').trim(),
+      delai: (r.delai || '').trim(),
+      jours: r.jours === '' ? null : Number.isNaN(Number(r.jours)) ? null : Number(r.jours),
+      traitement: (r.traitement || '').trim(),
+      source: (r.source || '').trim()
+    }))
+    .filter(r => r.code);
+
+  document.getElementById('jsonOut').value = JSON.stringify(cleaned, null, 2);
+}
+
+function downloadJson() {
+  buildJson();
+  const txt = document.getElementById('jsonOut').value;
+  const blob = new Blob([txt], { type: 'application/json;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'classification-avis-codes-complet.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function resetData() {
+  data = JSON.parse(JSON.stringify(BASE_DATA));
+  render();
+  document.getElementById('jsonOut').value = '';
+}
+
+function escapeHtml(v) {
+  return String(v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+render();
+</script>
+</body>
+</html>
